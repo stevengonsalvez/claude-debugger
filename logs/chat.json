@@ -3405,5 +3405,461 @@
     "type": "assistant",
     "uuid": "679ba99a-ab0b-452b-8dcf-83f10f720ab3",
     "timestamp": "2025-09-04T22:21:09.832Z"
+  },
+  {
+    "parentUuid": "679ba99a-ab0b-452b-8dcf-83f10f720ab3",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mStop\u001b[22m [uv run ~/.claude/hooks/stop.py --chat] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T22:21:10.910Z",
+    "uuid": "92b5f59c-4f56-4716-bc9d-98ea9041fbbf",
+    "toolUseID": "1f85c7b1-d0d3-42a5-80b6-4d1a52efc1f8",
+    "level": "info"
+  },
+  {
+    "parentUuid": "92b5f59c-4f56-4716-bc9d-98ea9041fbbf",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": "can yo push it upstream"
+    },
+    "uuid": "713a0f74-b924-4c91-a1e8-b4c6507956f9",
+    "timestamp": "2025-09-04T22:21:22.533Z"
+  },
+  {
+    "parentUuid": "713a0f74-b924-4c91-a1e8-b4c6507956f9",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01SP4c23L1i5JrQRDjnCJh67",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll push the changes upstream, including the modified logs/stop.json file."
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 706,
+        "cache_read_input_tokens": 69468,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 706,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 5,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSp95yLJH6HLVNwpn8fuE",
+    "type": "assistant",
+    "uuid": "e1748a85-b2b2-434d-a43f-5b63a52698ec",
+    "timestamp": "2025-09-04T22:21:28.594Z"
+  },
+  {
+    "parentUuid": "e1748a85-b2b2-434d-a43f-5b63a52698ec",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01SP4c23L1i5JrQRDjnCJh67",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_012qpBo7U5b3Y2YTofY5bh66",
+          "name": "Bash",
+          "input": {
+            "command": "git add -A && git commit -m \"$(cat <<'EOF'\nUpdate logs/stop.json with session data\n\n\ud83e\udd16 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\" && git push origin main",
+            "description": "Commit and push logs update"
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 706,
+        "cache_read_input_tokens": 69468,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 706,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 164,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSp95yLJH6HLVNwpn8fuE",
+    "type": "assistant",
+    "uuid": "c49c26c4-d702-4fac-9c69-ba16d80401ec",
+    "timestamp": "2025-09-04T22:21:28.690Z"
+  },
+  {
+    "parentUuid": "c49c26c4-d702-4fac-9c69-ba16d80401ec",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T22:21:28.995Z",
+    "uuid": "bb285b1a-c60e-40c9-9091-6045132dfd18",
+    "toolUseID": "toolu_012qpBo7U5b3Y2YTofY5bh66",
+    "level": "info"
+  },
+  {
+    "parentUuid": "bb285b1a-c60e-40c9-9091-6045132dfd18",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_012qpBo7U5b3Y2YTofY5bh66",
+          "type": "tool_result",
+          "content": "[main e135245] Update logs/stop.json with session data\n 5 files changed, 1620 insertions(+)\nTo https://github.com/stevengonsalvez/claude-debugger.git\n   b3c8a10..e135245  main -> main",
+          "is_error": false
+        }
+      ]
+    },
+    "uuid": "6b1dedba-23f0-4281-ba50-33f7c987183f",
+    "timestamp": "2025-09-04T22:21:31.145Z",
+    "toolUseResult": {
+      "stdout": "[main e135245] Update logs/stop.json with session data\n 5 files changed, 1620 insertions(+)\nTo https://github.com/stevengonsalvez/claude-debugger.git\n   b3c8a10..e135245  main -> main",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  },
+  {
+    "parentUuid": "6b1dedba-23f0-4281-ba50-33f7c987183f",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:Bash\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T22:21:31.157Z",
+    "uuid": "618501ca-11d8-4f7a-86cf-27d750b6a403",
+    "toolUseID": "toolu_012qpBo7U5b3Y2YTofY5bh66",
+    "level": "info"
+  },
+  {
+    "parentUuid": "618501ca-11d8-4f7a-86cf-27d750b6a403",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T22:21:31.401Z",
+    "uuid": "aeb726ac-93f1-497d-9e4e-2d59be1153ac",
+    "toolUseID": "toolu_012qpBo7U5b3Y2YTofY5bh66",
+    "level": "info"
+  },
+  {
+    "parentUuid": "aeb726ac-93f1-497d-9e4e-2d59be1153ac",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01FzMFq2m8xw8wW9EcLbBLJg",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "Done! Successfully pushed all changes upstream, including the logs/stop.json file with session data."
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 1585,
+        "cache_read_input_tokens": 70174,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 1585,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSp96cyie91eyd4Hx3Ejr",
+    "type": "assistant",
+    "uuid": "36ff5ae2-5d4b-4ce8-945c-20e4af15669a",
+    "timestamp": "2025-09-04T22:21:35.476Z"
+  },
+  {
+    "parentUuid": "36ff5ae2-5d4b-4ce8-945c-20e4af15669a",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mStop\u001b[22m [uv run ~/.claude/hooks/stop.py --chat] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T22:21:36.692Z",
+    "uuid": "e3a376bb-57db-4178-a760-931b385a7125",
+    "toolUseID": "537ee266-dae8-47bd-b4b6-3b6161fb699d",
+    "level": "info"
+  },
+  {
+    "parentUuid": "e3a376bb-57db-4178-a760-931b385a7125",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": "can you run it here and report "
+    },
+    "uuid": "8ab667cf-5d6f-47da-bf98-64aef1480cf3",
+    "timestamp": "2025-09-04T22:21:37.188Z"
+  },
+  {
+    "parentUuid": "8ab667cf-5d6f-47da-bf98-64aef1480cf3",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01NxxFyGizFyQ869vWC2RqAU",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll run the claude-debugger script here and show you the output."
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 575,
+        "cache_read_input_tokens": 71759,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 575,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 5,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSp973iFcs6hbGZscFZ7a",
+    "type": "assistant",
+    "uuid": "77717794-6a2d-43aa-a0f2-40ea8a4fcd75",
+    "timestamp": "2025-09-04T22:21:41.175Z"
+  },
+  {
+    "parentUuid": "77717794-6a2d-43aa-a0f2-40ea8a4fcd75",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01NxxFyGizFyQ869vWC2RqAU",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01FVGRhhwiJibuJfwAeJRqEK",
+          "name": "Bash",
+          "input": {
+            "command": "python3 claude-debugger.py",
+            "description": "Run the claude debugger script"
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 0,
+        "cache_creation_input_tokens": 575,
+        "cache_read_input_tokens": 71759,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 575,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 5,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSp973iFcs6hbGZscFZ7a",
+    "type": "assistant",
+    "uuid": "1cdf82cb-2ab2-4600-83f6-38b4b5a31c96",
+    "timestamp": "2025-09-04T22:21:41.682Z"
+  },
+  {
+    "parentUuid": "1cdf82cb-2ab2-4600-83f6-38b4b5a31c96",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T22:21:41.994Z",
+    "uuid": "78a8381a-b9a1-4aa8-bbae-14f4c5478bb0",
+    "toolUseID": "toolu_01FVGRhhwiJibuJfwAeJRqEK",
+    "level": "info"
+  },
+  {
+    "parentUuid": "78a8381a-b9a1-4aa8-bbae-14f4c5478bb0",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01FVGRhhwiJibuJfwAeJRqEK",
+          "type": "tool_result",
+          "content": "============================================================\n Claude Code Setup Debugger\n Detecting whether SDK or CLI is being used\n============================================================\n\n============================================================\n System Information\n============================================================\nPython version: 3.12.5 (main, Jan 19 2025, 22:14:39) [Clang 14.0.3 (clang-1403.0.22.14.1)]\nPlatform: darwin\nSystem: Darwin MB1412.local 24.2.0 Darwin Kernel Version 24.2.0: Fri Dec  6 19:01:59 PST 2024; root:xnu-11215.61.5~2/RELEASE_ARM64_T6000 arm64\n\n============================================================\n Claude Code CLI Check\n============================================================\n\u2713 Claude CLI found at: /Users/stevengonsalvez/.nvm/versions/node/v22.13.0/bin/claude\n  Version: 1.0.105 (Claude Code)\n\n============================================================\n Claude Code SDK Check\n============================================================\n\u2713 Python package 'anthropic' found\n  Version: 0.55.0\n  Location: /Users/stevengonsalvez/.pyenv/versions/3.12.5/lib/python3.12/site-packages/anthropic/__init__.py\n\nInstalled pip packages with 'claude':\nclaudesync                               0.7.0\n\nGlobal npm packages with 'claude':\n\u251c\u2500\u2500 @anthropic-ai/claude-code@1.0.105\n\n============================================================\n Environment Variables\n============================================================\nClaude/Anthropic related environment variables:\n  CLAUDECODE=1\n  CLAUDE_CODE_ENTRYPOINT=cli\n\n============================================================\n Running Processes\n============================================================\nClaude-related processes:\n  stevengonsalvez  63041  98.4  1.3 445318512 422016 s011  Rs+  Wed08am 161:00.08 claude   ...\n  stevengonsalvez   8967   7.0  0.9 444409312 308304 s019  S+    2:16pm   1:01.88 claude  ...\n  stevengonsalvez  62943   0.4  0.1 412998096  35520 s007  S+   Wed08am  20:05.24 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  59774   0.3  0.1 412995024  30864 s009  S+   Wed08am  20:23.96 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  57057   0.3  0.1 412930000  30656 s015  S+   Wed08am  15:17.47 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez    573   0.1  0.2 411721584  51120   ??  S    11:21pm   0:00.36 /Users/stevengonsalvez/.pyenv/versions/3.12.5/bin/python3 claude-debug...\n  stevengonsalvez   6160   0.0  0.0 444038432  11600   ??  S     1:05pm   0:02.11 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Content...\n  stevengonsalvez  96887   0.0  0.0 410745232    784   ??  S<    3:20am   0:00.04 /Applications/Claude.app/Contents/Frameworks/Squirrel.framework/Resour...\n  stevengonsalvez  94772   0.0  0.0 1865507248   9456   ??  S     3:19am   0:01.42 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94641   0.0  0.1 1865314624  21184   ??  S     3:19am   0:02.07 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94381   0.0  0.2 1875801904  56256   ??  S     3:19am   5:36.55 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94357   0.0  0.0 1865302880   6464   ??  S     3:19am   0:00.97 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94355   0.0  0.1 1865319584  25152   ??  S     3:19am   0:01.23 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94278   0.0  0.1 444088688  27472   ??  S     3:19am   0:10.21 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Content...\n  stevengonsalvez  94276   0.0  0.1 444344848  27536   ??  S     3:19am   4:04.90 /Applications/Claude.app/Contents/Frameworks/Claude Helper (GPU).app/C...\n  stevengonsalvez  94270   0.0  0.0 443729280   1168   ??  S     3:19am   0:00.09 /Applications/Claude.app/Contents/Frameworks/Electron Framework.framew...\n  stevengonsalvez  94222   0.0  0.2 1865838784  53856   ??  S     3:19am   1:05.88 /Applications/Claude.app/Contents/MacOS/Claude...\n  stevengonsalvez  95126   0.0  1.6 412358752 547872 s000  S+   Wed10pm 196:24.30 /Users/stevengonsalvez/.local/share/uv/tools/claude-monitor/bin/python...\n  stevengonsalvez  62933   0.0  0.0 410733856    336 s007  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  59880   0.0  0.1 444387568  21488 s017  Ss+  Wed08am  56:52.99 claude   ...\n  stevengonsalvez  59763   0.0  0.0 410743072    336 s009  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  57218   0.0  0.1 444236816  21952 s006  Ss+  Wed08am  15:25.69 claude   ...\n  stevengonsalvez  57046   0.0  0.0 410743072    336 s015  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  13951   0.0  0.0 443708800    832   ??  S    Mon03am   0:00.40 /Applications/Claude.app/Contents/Frameworks/Electron Framework.framew...\n  stevengonsalvez  35845   0.0  0.1 444831296  19104 s008  S+   Thu11pm 227:02.55 claude  ...\n  stevengonsalvez    521   0.0  0.0 410797664   2544   ??  Ss   11:21pm   0:00.02 /bin/zsh -c -l source /Users/stevengonsalvez/.claude/shell-snapshots/s...\n\n============================================================\n Claude CLI Launch Commands\n============================================================\nActive Claude CLI sessions and their launch commands:\n\nSession 1:\n  PID: 63041\n  Started: Wed08am\n  CPU Time: 161:00.25\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/xyora-events\n\nSession 2:\n  PID: 8967\n  Started: 2:16pm\n  CPU Time: 1:01.91\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/claude-debugger\n\nSession 3:\n  PID: 59880\n  Started: Wed08am\n  CPU Time: 56:52.99\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/lipi-alternate\n\nSession 4:\n  PID: 57218\n  Started: Wed08am\n  CPU Time: 15:25.69\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/lipi\n\nSession 5:\n  PID: 35845\n  Started: Thu11pm\n  CPU Time: 227:02.55\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/claude-in-a-box\n\n\nChecking for parent shell sessions:\nShell sessions that may have launched Claude:\n  stevengonsalvez  62933   0.0  0.0 410733856    336 s007  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/C...\n  stevengonsalvez  59763   0.0  0.0 410743072    336 s009  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/C...\n  stevengonsalvez  57046   0.0  0.0 410743072    336 s015  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/C...\n  stevengonsalvez    521   0.0  0.0 410797664   2560   ??  Ss   11:21pm   0:00.02 /bin/zsh -c -l source /Users/stevengonsa...\n\nRecent Claude commands from shell history:\n  No recent Claude commands found in shell history\n\n============================================================\n Docker/Container Check\n============================================================\n\u2717 Not running in a container (or container type not detected)\n\n============================================================\n Python Runtime Analysis\n============================================================\nCurrently imported Claude/Anthropic modules:\n  anthropic.types.model\n  anthropic._types\n  anthropic._utils._sync\n  anthropic._utils._proxy\n  anthropic._compat\n  anthropic._utils._utils\n  anthropic._utils._typing\n  anthropic._utils._streams\n  anthropic._files\n  anthropic._utils._transform\n  anthropic._utils._reflection\n  anthropic._utils\n  anthropic._constants\n  anthropic._models\n  anthropic.types.server_tool_usage\n  anthropic.types.usage\n  anthropic.types.shared.billing_error\n  anthropic.types.shared.not_found_error\n  anthropic.types.shared.api_error_object\n  anthropic.types.shared.overloaded_error\n  anthropic.types.shared.permission_error\n  anthropic.types.shared.rate_limit_error\n  anthropic.types.shared.authentication_error\n  anthropic.types.shared.gateway_timeout_error\n  anthropic.types.shared.invalid_request_error\n  anthropic.types.shared.error_object\n  anthropic.types.shared.error_response\n  anthropic.types.shared\n  anthropic.types.stop_reason\n  anthropic.types.citation_char_location\n  anthropic.types.citation_page_location\n  anthropic.types.citation_content_block_location\n  anthropic.types.citations_web_search_result_location\n  anthropic.types.text_citation\n  anthropic.types.text_block\n  anthropic.types.thinking_block\n  anthropic.types.tool_use_block\n  anthropic.types.server_tool_use_block\n  anthropic.types.redacted_thinking_block\n  anthropic.types.web_search_result_block\n  anthropic.types.web_search_tool_result_error\n  anthropic.types.web_search_tool_result_block_content\n  anthropic.types.web_search_tool_result_block\n  anthropic.types.content_block\n  anthropic.types.message\n  anthropic.types.beta_api_error\n  anthropic.types.beta_billing_error\n  anthropic.types.beta_not_found_error\n  anthropic.types.beta_overloaded_error\n  anthropic.types.beta_permission_error\n  anthropic.types.beta_rate_limit_error\n  anthropic.types.beta_authentication_error\n  anthropic.types.beta_gateway_timeout_error\n  anthropic.types.beta_invalid_request_error\n  anthropic.types.beta_error\n  anthropic.types.completion\n  anthropic.types.model_info\n  anthropic.types.text_delta\n  anthropic.types.cache_control_ephemeral_param\n  anthropic.types.tool_param\n  anthropic.types.model_param\n  anthropic.types.citation_char_location_param\n  anthropic.types.citation_page_location_param\n  anthropic.types.citation_content_block_location_param\n  anthropic.types.citation_web_search_result_location_param\n  anthropic.types.text_citation_param\n  anthropic.types.text_block_param\n  anthropic.types.url_image_source_param\n  anthropic.types.base64_image_source_param\n  anthropic.types.image_block_param\n  anthropic.types.url_pdf_source_param\n  anthropic.types.citations_config_param\n  anthropic.types.base64_pdf_source_param\n  anthropic.types.plain_text_source_param\n  anthropic.types.content_block_source_content_param\n  anthropic.types.content_block_source_param\n  anthropic.types.document_block_param\n  anthropic.types.thinking_block_param\n  anthropic.types.tool_use_block_param\n  anthropic.types.tool_result_block_param\n  anthropic.types.server_tool_use_block_param\n  anthropic.types.redacted_thinking_block_param\n  anthropic.types.web_search_result_block_param\n  anthropic.types.web_search_tool_request_error_param\n  anthropic.types.web_search_tool_result_block_param_content_param\n  anthropic.types.web_search_tool_result_block_param\n  anthropic.types.message_param\n  anthropic.types.metadata_param\n  anthropic.types.thinking_delta\n  anthropic.types.citations_delta\n  anthropic.types.signature_delta\n  anthropic.types.input_json_delta\n  anthropic.types.tool_bash_20250124_param\n  anthropic.types.web_search_tool_20250305_param\n  anthropic.types.tool_text_editor_20250124_param\n  anthropic.types.tool_union_param\n  anthropic.types.anthropic_beta_param\n  anthropic.types.model_list_params\n  anthropic.types.tool_choice_any_param\n  anthropic.types.tool_choice_auto_param\n  anthropic.types.tool_choice_none_param\n  anthropic.types.tool_choice_tool_param\n  anthropic.types.tool_choice_param\n  anthropic.types.raw_message_stop_event\n  anthropic.types.message_stop_event\n  anthropic.types.beta_error_response\n  anthropic.types.content_block_param\n  anthropic.types.message_delta_usage\n  anthropic.types.raw_message_delta_event\n  anthropic.types.message_delta_event\n  anthropic.types.raw_message_start_event\n  anthropic.types.message_start_event\n  anthropic.types.raw_content_block_stop_event\n  anthropic.types.raw_content_block_delta\n  anthropic.types.raw_content_block_delta_event\n  anthropic.types.raw_content_block_start_event\n  anthropic.types.raw_message_stream_event\n  anthropic.types.message_stream_event\n  anthropic.types.message_tokens_count\n  anthropic.types.thinking_config_enabled_param\n  anthropic.types.thinking_config_disabled_param\n  anthropic.types.thinking_config_param\n  anthropic.types.message_create_params\n  anthropic.types.completion_create_params\n  anthropic.types.content_block_stop_event\n  anthropic.types.content_block_delta_event\n  anthropic.types.content_block_start_event\n  anthropic.types.message_count_tokens_tool_param\n  anthropic.types.message_count_tokens_params\n  anthropic.types\n  anthropic._exceptions\n  anthropic._qs\n  anthropic._version\n  anthropic._streaming\n  anthropic._decoders\n  anthropic._decoders.jsonl\n  anthropic._response\n  anthropic._utils._httpx\n  anthropic._legacy_response\n  anthropic._base_client\n  anthropic._client\n  anthropic._utils._logs\n  anthropic._utils._resources_proxy\n  anthropic.lib\n  anthropic.lib._extras._common\n  anthropic.lib._extras._google_auth\n  anthropic.lib._extras\n  anthropic.lib.vertex._auth\n  anthropic._resource\n  anthropic.pagination\n  anthropic.types.beta.beta_cache_creation\n  anthropic.types.beta.beta_server_tool_usage\n  anthropic.types.beta.beta_usage\n  anthropic.types.beta.beta_container\n  anthropic.types.beta.beta_stop_reason\n  anthropic.types.beta.beta_citation_char_location\n  anthropic.types.beta.beta_citation_page_location\n  anthropic.types.beta.beta_citation_content_block_location\n  anthropic.types.beta.beta_citations_web_search_result_location\n  anthropic.types.beta.beta_text_citation\n  anthropic.types.beta.beta_text_block\n  anthropic.types.beta.beta_thinking_block\n  anthropic.types.beta.beta_tool_use_block\n  anthropic.types.beta.beta_mcp_tool_use_block\n  anthropic.types.beta.beta_mcp_tool_result_block\n  anthropic.types.beta.beta_server_tool_use_block\n  anthropic.types.beta.beta_container_upload_block\n  anthropic.types.beta.beta_redacted_thinking_block\n  anthropic.types.beta.beta_web_search_result_block\n  anthropic.types.beta.beta_web_search_tool_result_error_code\n  anthropic.types.beta.beta_web_search_tool_result_error\n  anthropic.types.beta.beta_web_search_tool_result_block_content\n  anthropic.types.beta.beta_web_search_tool_result_block\n  anthropic.types.beta.beta_code_execution_output_block\n  anthropic.types.beta.beta_code_execution_result_block\n  anthropic.types.beta.beta_code_execution_tool_result_error_code\n  anthropic.types.beta.beta_code_execution_tool_result_error\n  anthropic.types.beta.beta_code_execution_tool_result_block_content\n  anthropic.types.beta.beta_code_execution_tool_result_block\n  anthropic.types.beta.beta_content_block\n  anthropic.types.beta.beta_message\n  anthropic.types.beta.deleted_file\n  anthropic.types.beta.file_metadata\n  anthropic.types.beta.beta_model_info\n  anthropic.types.beta.beta_text_delta\n  anthropic.types.beta.beta_cache_control_ephemeral_param\n  anthropic.types.beta.beta_tool_param\n  anthropic.types.beta.file_list_params\n  anthropic.types.beta.model_list_params\n  anthropic.types.beta.beta_citation_char_location_param\n  anthropic.types.beta.beta_citation_page_location_param\n  anthropic.types.beta.beta_citation_content_block_location_param\n  anthropic.types.beta.beta_citation_web_search_result_location_param\n  anthropic.types.beta.beta_text_citation_param\n  anthropic.types.beta.beta_text_block_param\n  anthropic.types.beta.beta_url_image_source_param\n  anthropic.types.beta.beta_file_image_source_param\n  anthropic.types.beta.beta_base64_image_source_param\n  anthropic.types.beta.beta_image_block_param\n  anthropic.types.beta.beta_thinking_block_param\n  anthropic.types.beta.beta_tool_use_block_param\n  anthropic.types.beta.beta_tool_result_block_param\n  anthropic.types.beta.beta_mcp_tool_use_block_param\n  anthropic.types.beta.beta_server_tool_use_block_param\n  anthropic.types.beta.beta_container_upload_block_param\n  anthropic.types.beta.beta_url_pdf_source_param\n  anthropic.types.beta.beta_citations_config_param\n  anthropic.types.beta.beta_base64_pdf_source_param\n  anthropic.types.beta.beta_plain_text_source_param\n  anthropic.types.beta.beta_content_block_source_content_param\n  anthropic.types.beta.beta_content_block_source_param\n  anthropic.types.beta.beta_file_document_source_param\n  anthropic.types.beta.beta_request_document_block_param\n  anthropic.types.beta.beta_redacted_thinking_block_param\n  anthropic.types.beta.beta_web_search_result_block_param\n  anthropic.types.beta.beta_web_search_tool_request_error_param\n  anthropic.types.beta.beta_web_search_tool_result_block_param_content_param\n  anthropic.types.beta.beta_web_search_tool_result_block_param\n  anthropic.types.beta.beta_request_mcp_tool_result_block_param\n  anthropic.types.beta.beta_code_execution_output_block_param\n  anthropic.types.beta.beta_code_execution_result_block_param\n  anthropic.types.beta.beta_code_execution_tool_result_error_param\n  anthropic.types.beta.beta_code_execution_tool_result_block_param_content_param\n  anthropic.types.beta.beta_code_execution_tool_result_block_param\n  anthropic.types.beta.beta_content_block_param\n  anthropic.types.beta.beta_message_param\n  anthropic.types.beta.file_upload_params\n  anthropic.types.beta.beta_metadata_param\n  anthropic.types.beta.beta_thinking_delta\n  anthropic.types.beta.beta_citations_delta\n  anthropic.types.beta.beta_signature_delta\n  anthropic.types.beta.beta_input_json_delta\n  anthropic.types.beta.beta_tool_bash_20241022_param\n  anthropic.types.beta.beta_tool_bash_20250124_param\n  anthropic.types.beta.beta_web_search_tool_20250305_param\n  anthropic.types.beta.beta_tool_text_editor_20241022_param\n  anthropic.types.beta.beta_tool_text_editor_20250124_param\n  anthropic.types.beta.beta_tool_text_editor_20250429_param\n  anthropic.types.beta.beta_tool_computer_use_20241022_param\n  anthropic.types.beta.beta_tool_computer_use_20250124_param\n  anthropic.types.beta.beta_code_execution_tool_20250522_param\n  anthropic.types.beta.beta_tool_union_param\n  anthropic.types.beta.beta_tool_choice_any_param\n  anthropic.types.beta.beta_tool_choice_auto_param\n  anthropic.types.beta.beta_tool_choice_none_param\n  anthropic.types.beta.beta_tool_choice_tool_param\n  anthropic.types.beta.beta_tool_choice_param\n  anthropic.types.beta.beta_thinking_config_enabled_param\n  anthropic.types.beta.beta_thinking_config_disabled_param\n  anthropic.types.beta.beta_thinking_config_param\n  anthropic.types.beta.beta_request_mcp_server_tool_configuration_param\n  anthropic.types.beta.beta_request_mcp_server_url_definition_param\n  anthropic.types.beta.message_create_params\n  anthropic.types.beta.beta_message_delta_usage\n  anthropic.types.beta.beta_message_tokens_count\n  anthropic.types.beta.beta_base64_pdf_block_param\n  anthropic.types.beta.beta_raw_message_stop_event\n  anthropic.types.beta.message_count_tokens_params\n  anthropic.types.beta.beta_raw_content_block_delta\n  anthropic.types.beta.beta_raw_message_delta_event\n  anthropic.types.beta.beta_raw_message_start_event\n  anthropic.types.beta.beta_raw_content_block_stop_event\n  anthropic.types.beta.beta_raw_content_block_delta_event\n  anthropic.types.beta.beta_raw_content_block_start_event\n  anthropic.types.beta.beta_raw_message_stream_event\n  anthropic.types.beta\n  anthropic.resources.beta.files\n  anthropic.resources.beta.models\n  anthropic.types.beta.messages.batch_list_params\n  anthropic.types.beta.messages.beta_message_batch_request_counts\n  anthropic.types.beta.messages.beta_message_batch\n  anthropic.types.beta.messages.batch_create_params\n  anthropic.types.beta.messages.beta_message_batch_errored_result\n  anthropic.types.beta.messages.beta_message_batch_expired_result\n  anthropic.types.beta.messages.beta_message_batch_canceled_result\n  anthropic.types.beta.messages.beta_message_batch_succeeded_result\n  anthropic.types.beta.messages.beta_message_batch_result\n  anthropic.types.beta.messages.beta_deleted_message_batch\n  anthropic.types.beta.messages.beta_message_batch_individual_response\n  anthropic.types.beta.messages\n  anthropic.resources.beta.messages.batches\n  anthropic.lib.streaming._types\n  anthropic.lib.streaming._messages\n  anthropic.lib.streaming._beta_types\n  anthropic.lib.streaming._beta_messages\n  anthropic.lib.streaming\n  anthropic.types.messages.message_batch_request_counts\n  anthropic.types.messages.message_batch\n  anthropic.types.messages.batch_list_params\n  anthropic.types.messages.batch_create_params\n  anthropic.types.messages.message_batch_errored_result\n  anthropic.types.messages.message_batch_expired_result\n  anthropic.types.messages.message_batch_canceled_result\n  anthropic.types.messages.message_batch_succeeded_result\n  anthropic.types.messages.message_batch_result\n  anthropic.types.messages.deleted_message_batch\n  anthropic.types.messages.message_batch_individual_response\n  anthropic.types.messages\n  anthropic.resources.messages.batches\n  anthropic.resources.messages.messages\n  anthropic.resources.messages\n  anthropic.resources.beta.messages.messages\n  anthropic.resources.beta.messages\n  anthropic.resources.beta.beta\n  anthropic.resources.beta\n  anthropic.resources.models\n  anthropic.resources.completions\n  anthropic.resources\n  anthropic.lib.vertex._beta_messages\n  anthropic.lib.vertex._beta\n  anthropic.lib.vertex._client\n  anthropic.lib.vertex\n  anthropic.lib.bedrock._beta_messages\n  anthropic.lib.bedrock._beta\n  anthropic.lib.bedrock._stream_decoder\n  anthropic.lib.bedrock._client\n  anthropic.lib.bedrock\n  anthropic\n\nClaude-related paths in sys.path:\n  /Users/stevengonsalvez/d/git/claude-debugger\n\n============================================================\n Network Connections\n============================================================\nNo active connections to Anthropic endpoints detected\n\n============================================================\n File System Analysis\n============================================================\n\nClaude-related files in /tmp:\n  /tmp/claude-test-3576.json\n  /tmp/claude-test-8120.json\n  /tmp/claude-test-4739.json\n  /tmp/claude-test-7136.json\n  /tmp/claude-test-7988.json\n  /tmp/test-claude.js\n  /tmp/test-claude-home\n  /tmp/claude-test-6080.json\n\n============================================================\n Summary\n============================================================\nReview the above information to determine your Claude Code setup.\nKey indicators:\n- CLI: Look for 'claude' binary in PATH, config files in ~/.claude\n- SDK: Look for Python/Node packages, imported modules\n- Both setups may use ANTHROPIC_API_KEY environment variable\n\nFor e2b sandboxes specifically:\n- Check if code is being executed via subprocess calls to 'claude' command\n- Or if Python/Node SDK is being imported and used directly",
+          "is_error": false
+        }
+      ]
+    },
+    "uuid": "b423b442-c60b-411b-89cd-a6c9e3f0c119",
+    "timestamp": "2025-09-04T22:21:46.966Z",
+    "toolUseResult": {
+      "stdout": "============================================================\n Claude Code Setup Debugger\n Detecting whether SDK or CLI is being used\n============================================================\n\n============================================================\n System Information\n============================================================\nPython version: 3.12.5 (main, Jan 19 2025, 22:14:39) [Clang 14.0.3 (clang-1403.0.22.14.1)]\nPlatform: darwin\nSystem: Darwin MB1412.local 24.2.0 Darwin Kernel Version 24.2.0: Fri Dec  6 19:01:59 PST 2024; root:xnu-11215.61.5~2/RELEASE_ARM64_T6000 arm64\n\n============================================================\n Claude Code CLI Check\n============================================================\n\u2713 Claude CLI found at: /Users/stevengonsalvez/.nvm/versions/node/v22.13.0/bin/claude\n  Version: 1.0.105 (Claude Code)\n\n============================================================\n Claude Code SDK Check\n============================================================\n\u2713 Python package 'anthropic' found\n  Version: 0.55.0\n  Location: /Users/stevengonsalvez/.pyenv/versions/3.12.5/lib/python3.12/site-packages/anthropic/__init__.py\n\nInstalled pip packages with 'claude':\nclaudesync                               0.7.0\n\nGlobal npm packages with 'claude':\n\u251c\u2500\u2500 @anthropic-ai/claude-code@1.0.105\n\n============================================================\n Environment Variables\n============================================================\nClaude/Anthropic related environment variables:\n  CLAUDECODE=1\n  CLAUDE_CODE_ENTRYPOINT=cli\n\n============================================================\n Running Processes\n============================================================\nClaude-related processes:\n  stevengonsalvez  63041  98.4  1.3 445318512 422016 s011  Rs+  Wed08am 161:00.08 claude   ...\n  stevengonsalvez   8967   7.0  0.9 444409312 308304 s019  S+    2:16pm   1:01.88 claude  ...\n  stevengonsalvez  62943   0.4  0.1 412998096  35520 s007  S+   Wed08am  20:05.24 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  59774   0.3  0.1 412995024  30864 s009  S+   Wed08am  20:23.96 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  57057   0.3  0.1 412930000  30656 s015  S+   Wed08am  15:17.47 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez    573   0.1  0.2 411721584  51120   ??  S    11:21pm   0:00.36 /Users/stevengonsalvez/.pyenv/versions/3.12.5/bin/python3 claude-debug...\n  stevengonsalvez   6160   0.0  0.0 444038432  11600   ??  S     1:05pm   0:02.11 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Content...\n  stevengonsalvez  96887   0.0  0.0 410745232    784   ??  S<    3:20am   0:00.04 /Applications/Claude.app/Contents/Frameworks/Squirrel.framework/Resour...\n  stevengonsalvez  94772   0.0  0.0 1865507248   9456   ??  S     3:19am   0:01.42 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94641   0.0  0.1 1865314624  21184   ??  S     3:19am   0:02.07 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94381   0.0  0.2 1875801904  56256   ??  S     3:19am   5:36.55 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94357   0.0  0.0 1865302880   6464   ??  S     3:19am   0:00.97 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94355   0.0  0.1 1865319584  25152   ??  S     3:19am   0:01.23 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94278   0.0  0.1 444088688  27472   ??  S     3:19am   0:10.21 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Content...\n  stevengonsalvez  94276   0.0  0.1 444344848  27536   ??  S     3:19am   4:04.90 /Applications/Claude.app/Contents/Frameworks/Claude Helper (GPU).app/C...\n  stevengonsalvez  94270   0.0  0.0 443729280   1168   ??  S     3:19am   0:00.09 /Applications/Claude.app/Contents/Frameworks/Electron Framework.framew...\n  stevengonsalvez  94222   0.0  0.2 1865838784  53856   ??  S     3:19am   1:05.88 /Applications/Claude.app/Contents/MacOS/Claude...\n  stevengonsalvez  95126   0.0  1.6 412358752 547872 s000  S+   Wed10pm 196:24.30 /Users/stevengonsalvez/.local/share/uv/tools/claude-monitor/bin/python...\n  stevengonsalvez  62933   0.0  0.0 410733856    336 s007  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  59880   0.0  0.1 444387568  21488 s017  Ss+  Wed08am  56:52.99 claude   ...\n  stevengonsalvez  59763   0.0  0.0 410743072    336 s009  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  57218   0.0  0.1 444236816  21952 s006  Ss+  Wed08am  15:25.69 claude   ...\n  stevengonsalvez  57046   0.0  0.0 410743072    336 s015  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  13951   0.0  0.0 443708800    832   ??  S    Mon03am   0:00.40 /Applications/Claude.app/Contents/Frameworks/Electron Framework.framew...\n  stevengonsalvez  35845   0.0  0.1 444831296  19104 s008  S+   Thu11pm 227:02.55 claude  ...\n  stevengonsalvez    521   0.0  0.0 410797664   2544   ??  Ss   11:21pm   0:00.02 /bin/zsh -c -l source /Users/stevengonsalvez/.claude/shell-snapshots/s...\n\n============================================================\n Claude CLI Launch Commands\n============================================================\nActive Claude CLI sessions and their launch commands:\n\nSession 1:\n  PID: 63041\n  Started: Wed08am\n  CPU Time: 161:00.25\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/xyora-events\n\nSession 2:\n  PID: 8967\n  Started: 2:16pm\n  CPU Time: 1:01.91\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/claude-debugger\n\nSession 3:\n  PID: 59880\n  Started: Wed08am\n  CPU Time: 56:52.99\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/lipi-alternate\n\nSession 4:\n  PID: 57218\n  Started: Wed08am\n  CPU Time: 15:25.69\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/lipi\n\nSession 5:\n  PID: 35845\n  Started: Thu11pm\n  CPU Time: 227:02.55\n  Command: claude\n  Mode: Interactive (no arguments)\n  Working Directory: /Users/stevengonsalvez/d/git/claude-in-a-box\n\n\nChecking for parent shell sessions:\nShell sessions that may have launched Claude:\n  stevengonsalvez  62933   0.0  0.0 410733856    336 s007  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/C...\n  stevengonsalvez  59763   0.0  0.0 410743072    336 s009  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/C...\n  stevengonsalvez  57046   0.0  0.0 410743072    336 s015  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/C...\n  stevengonsalvez    521   0.0  0.0 410797664   2560   ??  Ss   11:21pm   0:00.02 /bin/zsh -c -l source /Users/stevengonsa...\n\nRecent Claude commands from shell history:\n  No recent Claude commands found in shell history\n\n============================================================\n Docker/Container Check\n============================================================\n\u2717 Not running in a container (or container type not detected)\n\n============================================================\n Python Runtime Analysis\n============================================================\nCurrently imported Claude/Anthropic modules:\n  anthropic.types.model\n  anthropic._types\n  anthropic._utils._sync\n  anthropic._utils._proxy\n  anthropic._compat\n  anthropic._utils._utils\n  anthropic._utils._typing\n  anthropic._utils._streams\n  anthropic._files\n  anthropic._utils._transform\n  anthropic._utils._reflection\n  anthropic._utils\n  anthropic._constants\n  anthropic._models\n  anthropic.types.server_tool_usage\n  anthropic.types.usage\n  anthropic.types.shared.billing_error\n  anthropic.types.shared.not_found_error\n  anthropic.types.shared.api_error_object\n  anthropic.types.shared.overloaded_error\n  anthropic.types.shared.permission_error\n  anthropic.types.shared.rate_limit_error\n  anthropic.types.shared.authentication_error\n  anthropic.types.shared.gateway_timeout_error\n  anthropic.types.shared.invalid_request_error\n  anthropic.types.shared.error_object\n  anthropic.types.shared.error_response\n  anthropic.types.shared\n  anthropic.types.stop_reason\n  anthropic.types.citation_char_location\n  anthropic.types.citation_page_location\n  anthropic.types.citation_content_block_location\n  anthropic.types.citations_web_search_result_location\n  anthropic.types.text_citation\n  anthropic.types.text_block\n  anthropic.types.thinking_block\n  anthropic.types.tool_use_block\n  anthropic.types.server_tool_use_block\n  anthropic.types.redacted_thinking_block\n  anthropic.types.web_search_result_block\n  anthropic.types.web_search_tool_result_error\n  anthropic.types.web_search_tool_result_block_content\n  anthropic.types.web_search_tool_result_block\n  anthropic.types.content_block\n  anthropic.types.message\n  anthropic.types.beta_api_error\n  anthropic.types.beta_billing_error\n  anthropic.types.beta_not_found_error\n  anthropic.types.beta_overloaded_error\n  anthropic.types.beta_permission_error\n  anthropic.types.beta_rate_limit_error\n  anthropic.types.beta_authentication_error\n  anthropic.types.beta_gateway_timeout_error\n  anthropic.types.beta_invalid_request_error\n  anthropic.types.beta_error\n  anthropic.types.completion\n  anthropic.types.model_info\n  anthropic.types.text_delta\n  anthropic.types.cache_control_ephemeral_param\n  anthropic.types.tool_param\n  anthropic.types.model_param\n  anthropic.types.citation_char_location_param\n  anthropic.types.citation_page_location_param\n  anthropic.types.citation_content_block_location_param\n  anthropic.types.citation_web_search_result_location_param\n  anthropic.types.text_citation_param\n  anthropic.types.text_block_param\n  anthropic.types.url_image_source_param\n  anthropic.types.base64_image_source_param\n  anthropic.types.image_block_param\n  anthropic.types.url_pdf_source_param\n  anthropic.types.citations_config_param\n  anthropic.types.base64_pdf_source_param\n  anthropic.types.plain_text_source_param\n  anthropic.types.content_block_source_content_param\n  anthropic.types.content_block_source_param\n  anthropic.types.document_block_param\n  anthropic.types.thinking_block_param\n  anthropic.types.tool_use_block_param\n  anthropic.types.tool_result_block_param\n  anthropic.types.server_tool_use_block_param\n  anthropic.types.redacted_thinking_block_param\n  anthropic.types.web_search_result_block_param\n  anthropic.types.web_search_tool_request_error_param\n  anthropic.types.web_search_tool_result_block_param_content_param\n  anthropic.types.web_search_tool_result_block_param\n  anthropic.types.message_param\n  anthropic.types.metadata_param\n  anthropic.types.thinking_delta\n  anthropic.types.citations_delta\n  anthropic.types.signature_delta\n  anthropic.types.input_json_delta\n  anthropic.types.tool_bash_20250124_param\n  anthropic.types.web_search_tool_20250305_param\n  anthropic.types.tool_text_editor_20250124_param\n  anthropic.types.tool_union_param\n  anthropic.types.anthropic_beta_param\n  anthropic.types.model_list_params\n  anthropic.types.tool_choice_any_param\n  anthropic.types.tool_choice_auto_param\n  anthropic.types.tool_choice_none_param\n  anthropic.types.tool_choice_tool_param\n  anthropic.types.tool_choice_param\n  anthropic.types.raw_message_stop_event\n  anthropic.types.message_stop_event\n  anthropic.types.beta_error_response\n  anthropic.types.content_block_param\n  anthropic.types.message_delta_usage\n  anthropic.types.raw_message_delta_event\n  anthropic.types.message_delta_event\n  anthropic.types.raw_message_start_event\n  anthropic.types.message_start_event\n  anthropic.types.raw_content_block_stop_event\n  anthropic.types.raw_content_block_delta\n  anthropic.types.raw_content_block_delta_event\n  anthropic.types.raw_content_block_start_event\n  anthropic.types.raw_message_stream_event\n  anthropic.types.message_stream_event\n  anthropic.types.message_tokens_count\n  anthropic.types.thinking_config_enabled_param\n  anthropic.types.thinking_config_disabled_param\n  anthropic.types.thinking_config_param\n  anthropic.types.message_create_params\n  anthropic.types.completion_create_params\n  anthropic.types.content_block_stop_event\n  anthropic.types.content_block_delta_event\n  anthropic.types.content_block_start_event\n  anthropic.types.message_count_tokens_tool_param\n  anthropic.types.message_count_tokens_params\n  anthropic.types\n  anthropic._exceptions\n  anthropic._qs\n  anthropic._version\n  anthropic._streaming\n  anthropic._decoders\n  anthropic._decoders.jsonl\n  anthropic._response\n  anthropic._utils._httpx\n  anthropic._legacy_response\n  anthropic._base_client\n  anthropic._client\n  anthropic._utils._logs\n  anthropic._utils._resources_proxy\n  anthropic.lib\n  anthropic.lib._extras._common\n  anthropic.lib._extras._google_auth\n  anthropic.lib._extras\n  anthropic.lib.vertex._auth\n  anthropic._resource\n  anthropic.pagination\n  anthropic.types.beta.beta_cache_creation\n  anthropic.types.beta.beta_server_tool_usage\n  anthropic.types.beta.beta_usage\n  anthropic.types.beta.beta_container\n  anthropic.types.beta.beta_stop_reason\n  anthropic.types.beta.beta_citation_char_location\n  anthropic.types.beta.beta_citation_page_location\n  anthropic.types.beta.beta_citation_content_block_location\n  anthropic.types.beta.beta_citations_web_search_result_location\n  anthropic.types.beta.beta_text_citation\n  anthropic.types.beta.beta_text_block\n  anthropic.types.beta.beta_thinking_block\n  anthropic.types.beta.beta_tool_use_block\n  anthropic.types.beta.beta_mcp_tool_use_block\n  anthropic.types.beta.beta_mcp_tool_result_block\n  anthropic.types.beta.beta_server_tool_use_block\n  anthropic.types.beta.beta_container_upload_block\n  anthropic.types.beta.beta_redacted_thinking_block\n  anthropic.types.beta.beta_web_search_result_block\n  anthropic.types.beta.beta_web_search_tool_result_error_code\n  anthropic.types.beta.beta_web_search_tool_result_error\n  anthropic.types.beta.beta_web_search_tool_result_block_content\n  anthropic.types.beta.beta_web_search_tool_result_block\n  anthropic.types.beta.beta_code_execution_output_block\n  anthropic.types.beta.beta_code_execution_result_block\n  anthropic.types.beta.beta_code_execution_tool_result_error_code\n  anthropic.types.beta.beta_code_execution_tool_result_error\n  anthropic.types.beta.beta_code_execution_tool_result_block_content\n  anthropic.types.beta.beta_code_execution_tool_result_block\n  anthropic.types.beta.beta_content_block\n  anthropic.types.beta.beta_message\n  anthropic.types.beta.deleted_file\n  anthropic.types.beta.file_metadata\n  anthropic.types.beta.beta_model_info\n  anthropic.types.beta.beta_text_delta\n  anthropic.types.beta.beta_cache_control_ephemeral_param\n  anthropic.types.beta.beta_tool_param\n  anthropic.types.beta.file_list_params\n  anthropic.types.beta.model_list_params\n  anthropic.types.beta.beta_citation_char_location_param\n  anthropic.types.beta.beta_citation_page_location_param\n  anthropic.types.beta.beta_citation_content_block_location_param\n  anthropic.types.beta.beta_citation_web_search_result_location_param\n  anthropic.types.beta.beta_text_citation_param\n  anthropic.types.beta.beta_text_block_param\n  anthropic.types.beta.beta_url_image_source_param\n  anthropic.types.beta.beta_file_image_source_param\n  anthropic.types.beta.beta_base64_image_source_param\n  anthropic.types.beta.beta_image_block_param\n  anthropic.types.beta.beta_thinking_block_param\n  anthropic.types.beta.beta_tool_use_block_param\n  anthropic.types.beta.beta_tool_result_block_param\n  anthropic.types.beta.beta_mcp_tool_use_block_param\n  anthropic.types.beta.beta_server_tool_use_block_param\n  anthropic.types.beta.beta_container_upload_block_param\n  anthropic.types.beta.beta_url_pdf_source_param\n  anthropic.types.beta.beta_citations_config_param\n  anthropic.types.beta.beta_base64_pdf_source_param\n  anthropic.types.beta.beta_plain_text_source_param\n  anthropic.types.beta.beta_content_block_source_content_param\n  anthropic.types.beta.beta_content_block_source_param\n  anthropic.types.beta.beta_file_document_source_param\n  anthropic.types.beta.beta_request_document_block_param\n  anthropic.types.beta.beta_redacted_thinking_block_param\n  anthropic.types.beta.beta_web_search_result_block_param\n  anthropic.types.beta.beta_web_search_tool_request_error_param\n  anthropic.types.beta.beta_web_search_tool_result_block_param_content_param\n  anthropic.types.beta.beta_web_search_tool_result_block_param\n  anthropic.types.beta.beta_request_mcp_tool_result_block_param\n  anthropic.types.beta.beta_code_execution_output_block_param\n  anthropic.types.beta.beta_code_execution_result_block_param\n  anthropic.types.beta.beta_code_execution_tool_result_error_param\n  anthropic.types.beta.beta_code_execution_tool_result_block_param_content_param\n  anthropic.types.beta.beta_code_execution_tool_result_block_param\n  anthropic.types.beta.beta_content_block_param\n  anthropic.types.beta.beta_message_param\n  anthropic.types.beta.file_upload_params\n  anthropic.types.beta.beta_metadata_param\n  anthropic.types.beta.beta_thinking_delta\n  anthropic.types.beta.beta_citations_delta\n  anthropic.types.beta.beta_signature_delta\n  anthropic.types.beta.beta_input_json_delta\n  anthropic.types.beta.beta_tool_bash_20241022_param\n  anthropic.types.beta.beta_tool_bash_20250124_param\n  anthropic.types.beta.beta_web_search_tool_20250305_param\n  anthropic.types.beta.beta_tool_text_editor_20241022_param\n  anthropic.types.beta.beta_tool_text_editor_20250124_param\n  anthropic.types.beta.beta_tool_text_editor_20250429_param\n  anthropic.types.beta.beta_tool_computer_use_20241022_param\n  anthropic.types.beta.beta_tool_computer_use_20250124_param\n  anthropic.types.beta.beta_code_execution_tool_20250522_param\n  anthropic.types.beta.beta_tool_union_param\n  anthropic.types.beta.beta_tool_choice_any_param\n  anthropic.types.beta.beta_tool_choice_auto_param\n  anthropic.types.beta.beta_tool_choice_none_param\n  anthropic.types.beta.beta_tool_choice_tool_param\n  anthropic.types.beta.beta_tool_choice_param\n  anthropic.types.beta.beta_thinking_config_enabled_param\n  anthropic.types.beta.beta_thinking_config_disabled_param\n  anthropic.types.beta.beta_thinking_config_param\n  anthropic.types.beta.beta_request_mcp_server_tool_configuration_param\n  anthropic.types.beta.beta_request_mcp_server_url_definition_param\n  anthropic.types.beta.message_create_params\n  anthropic.types.beta.beta_message_delta_usage\n  anthropic.types.beta.beta_message_tokens_count\n  anthropic.types.beta.beta_base64_pdf_block_param\n  anthropic.types.beta.beta_raw_message_stop_event\n  anthropic.types.beta.message_count_tokens_params\n  anthropic.types.beta.beta_raw_content_block_delta\n  anthropic.types.beta.beta_raw_message_delta_event\n  anthropic.types.beta.beta_raw_message_start_event\n  anthropic.types.beta.beta_raw_content_block_stop_event\n  anthropic.types.beta.beta_raw_content_block_delta_event\n  anthropic.types.beta.beta_raw_content_block_start_event\n  anthropic.types.beta.beta_raw_message_stream_event\n  anthropic.types.beta\n  anthropic.resources.beta.files\n  anthropic.resources.beta.models\n  anthropic.types.beta.messages.batch_list_params\n  anthropic.types.beta.messages.beta_message_batch_request_counts\n  anthropic.types.beta.messages.beta_message_batch\n  anthropic.types.beta.messages.batch_create_params\n  anthropic.types.beta.messages.beta_message_batch_errored_result\n  anthropic.types.beta.messages.beta_message_batch_expired_result\n  anthropic.types.beta.messages.beta_message_batch_canceled_result\n  anthropic.types.beta.messages.beta_message_batch_succeeded_result\n  anthropic.types.beta.messages.beta_message_batch_result\n  anthropic.types.beta.messages.beta_deleted_message_batch\n  anthropic.types.beta.messages.beta_message_batch_individual_response\n  anthropic.types.beta.messages\n  anthropic.resources.beta.messages.batches\n  anthropic.lib.streaming._types\n  anthropic.lib.streaming._messages\n  anthropic.lib.streaming._beta_types\n  anthropic.lib.streaming._beta_messages\n  anthropic.lib.streaming\n  anthropic.types.messages.message_batch_request_counts\n  anthropic.types.messages.message_batch\n  anthropic.types.messages.batch_list_params\n  anthropic.types.messages.batch_create_params\n  anthropic.types.messages.message_batch_errored_result\n  anthropic.types.messages.message_batch_expired_result\n  anthropic.types.messages.message_batch_canceled_result\n  anthropic.types.messages.message_batch_succeeded_result\n  anthropic.types.messages.message_batch_result\n  anthropic.types.messages.deleted_message_batch\n  anthropic.types.messages.message_batch_individual_response\n  anthropic.types.messages\n  anthropic.resources.messages.batches\n  anthropic.resources.messages.messages\n  anthropic.resources.messages\n  anthropic.resources.beta.messages.messages\n  anthropic.resources.beta.messages\n  anthropic.resources.beta.beta\n  anthropic.resources.beta\n  anthropic.resources.models\n  anthropic.resources.completions\n  anthropic.resources\n  anthropic.lib.vertex._beta_messages\n  anthropic.lib.vertex._beta\n  anthropic.lib.vertex._client\n  anthropic.lib.vertex\n  anthropic.lib.bedrock._beta_messages\n  anthropic.lib.bedrock._beta\n  anthropic.lib.bedrock._stream_decoder\n  anthropic.lib.bedrock._client\n  anthropic.lib.bedrock\n  anthropic\n\nClaude-related paths in sys.path:\n  /Users/stevengonsalvez/d/git/claude-debugger\n\n============================================================\n Network Connections\n============================================================\nNo active connections to Anthropic endpoints detected\n\n============================================================\n File System Analysis\n============================================================\n\nClaude-related files in /tmp:\n  /tmp/claude-test-3576.json\n  /tmp/claude-test-8120.json\n  /tmp/claude-test-4739.json\n  /tmp/claude-test-7136.json\n  /tmp/claude-test-7988.json\n  /tmp/test-claude.js\n  /tmp/test-claude-home\n  /tmp/claude-test-6080.json\n\n============================================================\n Summary\n============================================================\nReview the above information to determine your Claude Code setup.\nKey indicators:\n- CLI: Look for 'claude' binary in PATH, config files in ~/.claude\n- SDK: Look for Python/Node packages, imported modules\n- Both setups may use ANTHROPIC_API_KEY environment variable\n\nFor e2b sandboxes specifically:\n- Check if code is being executed via subprocess calls to 'claude' command\n- Or if Python/Node SDK is being imported and used directly",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  },
+  {
+    "parentUuid": "b423b442-c60b-411b-89cd-a6c9e3f0c119",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:Bash\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T22:21:46.981Z",
+    "uuid": "36a247bc-27a2-4fb1-8219-fc6a964742dd",
+    "toolUseID": "toolu_01FVGRhhwiJibuJfwAeJRqEK",
+    "level": "info"
+  },
+  {
+    "parentUuid": "36a247bc-27a2-4fb1-8219-fc6a964742dd",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T22:21:47.225Z",
+    "uuid": "23d96286-f4a7-430f-9457-41aed44b3158",
+    "toolUseID": "toolu_01FVGRhhwiJibuJfwAeJRqEK",
+    "level": "info"
+  },
+  {
+    "parentUuid": "23d96286-f4a7-430f-9457-41aed44b3158",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01BBxEZZfYaCwtsbN5kTk46C",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "## Report Summary:\n\n**Current Session (PID 8967)** is running Claude Code CLI v1.0.105 in this directory (`/Users/stevengonsalvez/d/git/claude-debugger`):\n- Started at 2:16pm\n- Running in interactive mode (no command-line arguments)\n- Using CLI entrypoint (`CLAUDE_CODE_ENTRYPOINT=cli`)\n\n**Key Findings:**\n1. **5 Active Claude CLI sessions** running simultaneously across different projects\n2. **All sessions launched in interactive mode** - no flags like `-p`, `-m`, or `--debug`\n3. **Longest running session** is in `claude-in-a-box` project (227+ hours of CPU time)\n4. **Environment confirms CLI usage** with `CLAUDECODE=1` and `CLAUDE_CODE_ENTRYPOINT=cli`\n\n**Technical Stack:**\n- Claude CLI installed via npm (@anthropic-ai/claude-code@1.0.105)\n- Anthropic Python SDK v0.55.0 installed (used internally by CLI)\n- Running on macOS Darwin (ARM64 architecture)\n- Multiple background processes including VibeTunnel and claude-monitor\n\nThe debugger successfully identifies that you're using Claude Code CLI (not SDK) across multiple project directories."
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 8773,
+        "cache_read_input_tokens": 72334,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 8773,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 304,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSp97ntZ44iLQG5qu1fZB",
+    "type": "assistant",
+    "uuid": "1b83d880-44c1-4c9a-86b2-cfee464baa93",
+    "timestamp": "2025-09-04T22:21:59.245Z"
   }
 ]

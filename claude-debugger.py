@@ -340,6 +340,172 @@ def check_network_connections():
         print("\nDNS lookups for Anthropic domains:")
         print(stdout)
 
+def check_terminal_environment():
+    """Check for terminal multiplexers and PTY setup."""
+    print_section("Terminal Environment & PTY Analysis")
+    
+    # Check if running in tmux
+    tmux_env = os.environ.get('TMUX')
+    if tmux_env:
+        print("✓ Running inside TMUX session")
+        print(f"  TMUX socket: {tmux_env}")
+        
+        # Get tmux session info
+        stdout, stderr, code = run_command("tmux display-message -p '#S:#W.#P'")
+        if stdout:
+            print(f"  Session info: {stdout}")
+        
+        # Check tmux panes
+        stdout, stderr, code = run_command("tmux list-panes -F '#{pane_pid} #{pane_tty} #{pane_current_command}'")
+        if stdout:
+            print("  Active panes:")
+            for line in stdout.split('\n')[:5]:  # Limit to 5 panes
+                if line.strip():
+                    print(f"    {line}")
+    else:
+        print("✗ Not running in TMUX")
+    
+    # Check if running in screen
+    screen_env = os.environ.get('STY')
+    if screen_env:
+        print("\n✓ Running inside GNU Screen session")
+        print(f"  Session: {screen_env}")
+        
+        # Get screen info
+        stdout, stderr, code = run_command("screen -ls")
+        if stdout:
+            print("  Screen sessions:")
+            for line in stdout.split('\n'):
+                if '\t' in line:
+                    print(f"    {line.strip()}")
+    else:
+        print("✗ Not running in GNU Screen")
+    
+    # Check terminal type and PTY
+    print("\nTerminal Information:")
+    term = os.environ.get('TERM', 'unknown')
+    print(f"  TERM: {term}")
+    
+    term_program = os.environ.get('TERM_PROGRAM')
+    if term_program:
+        print(f"  Terminal Program: {term_program}")
+    
+    term_session_id = os.environ.get('TERM_SESSION_ID')
+    if term_session_id:
+        print(f"  Terminal Session ID: {term_session_id}")
+    
+    # Check TTY/PTY
+    print("\nTTY/PTY Information:")
+    stdout, stderr, code = run_command("tty")
+    if stdout:
+        print(f"  Current TTY: {stdout}")
+        
+        # Check if it's a pseudo-terminal
+        if '/dev/pts/' in stdout or '/dev/ttys' in stdout.lower():
+            print("  Type: Pseudo-terminal (PTY)")
+        elif '/dev/tty' in stdout:
+            print("  Type: Hardware terminal")
+        else:
+            print("  Type: Unknown")
+    
+    # Check process tree to detect PTY wrappers
+    print("\nProcess Tree Analysis:")
+    
+    # Get current process ID
+    current_pid = os.getpid()
+    print(f"  Current script PID: {current_pid}")
+    
+    # Walk up the process tree
+    stdout, stderr, code = run_command(f"ps -o pid,ppid,comm,tty -p {current_pid}")
+    if stdout:
+        print("  Current process:")
+        print(f"    {stdout.split(chr(10))[1] if len(stdout.split(chr(10))) > 1 else stdout}")
+    
+    # Get parent processes
+    ppid = current_pid
+    for i in range(5):  # Check up to 5 levels
+        stdout, stderr, code = run_command(f"ps -o ppid= -p {ppid} 2>/dev/null")
+        if stdout and stdout.strip():
+            ppid = stdout.strip()
+            stdout2, stderr2, code2 = run_command(f"ps -o pid,ppid,comm,tty -p {ppid} 2>/dev/null | tail -1")
+            if stdout2:
+                print(f"  Parent level {i+1}: {stdout2.strip()}")
+        else:
+            break
+    
+    # Check for PTY allocation for Claude processes
+    print("\nClaude Process PTY Analysis:")
+    stdout, stderr, code = run_command("ps aux | grep -E 'claude' | grep -v grep | grep -v 'claude-debugger'")
+    if stdout:
+        for line in stdout.split('\n')[:5]:  # Limit to 5 processes
+            if line.strip() and 'claude' in line.lower():
+                parts = line.split(None, 10)
+                if len(parts) >= 2:
+                    pid = parts[1]
+                    
+                    # Get TTY for this process
+                    stdout2, stderr2, code2 = run_command(f"ps -o tty= -p {pid} 2>/dev/null")
+                    if stdout2 and stdout2.strip() != '?':
+                        print(f"  PID {pid}: TTY {stdout2.strip()}")
+                        
+                        # Check if it's a PTY
+                        if 's0' in stdout2 or 'pts' in stdout2:
+                            # Get more PTY info
+                            stdout3, stderr3, code3 = run_command(f"lsof -p {pid} 2>/dev/null | grep -E '(CHR|pts|tty)' | head -3")
+                            if stdout3:
+                                print(f"    PTY devices:")
+                                for pty_line in stdout3.split('\n'):
+                                    if pty_line.strip():
+                                        print(f"      {pty_line.strip()[:100]}...")
+    
+    # Check for SSH sessions
+    print("\nSSH Session Detection:")
+    ssh_client = os.environ.get('SSH_CLIENT')
+    ssh_tty = os.environ.get('SSH_TTY')
+    if ssh_client or ssh_tty:
+        print("✓ Running over SSH")
+        if ssh_client:
+            print(f"  SSH Client: {ssh_client}")
+        if ssh_tty:
+            print(f"  SSH TTY: {ssh_tty}")
+    else:
+        print("✗ Not an SSH session")
+    
+    # Check for container PTY
+    print("\nContainer PTY Detection:")
+    
+    # Docker container check
+    stdout, stderr, code = run_command("cat /proc/1/cgroup 2>/dev/null | grep -i docker")
+    if stdout:
+        print("✓ Running in Docker container with PTY")
+    
+    # Kubernetes pod check  
+    k8s_service = os.environ.get('KUBERNETES_SERVICE_HOST')
+    if k8s_service:
+        print(f"✓ Running in Kubernetes pod")
+        print(f"  Service Host: {k8s_service}")
+    
+    # Check for PTY wrapper programs
+    print("\nPTY Wrapper Detection:")
+    wrapper_commands = ['expect', 'script', 'unbuffer', 'pty', 'socat', 'screen', 'tmux', 'dtach']
+    
+    stdout, stderr, code = run_command("ps aux")
+    if stdout:
+        found_wrappers = []
+        for wrapper in wrapper_commands:
+            if wrapper in stdout.lower():
+                # Count occurrences
+                count = stdout.lower().count(wrapper)
+                if count > 0:
+                    found_wrappers.append(f"{wrapper} ({count} process{'es' if count > 1 else ''})")
+        
+        if found_wrappers:
+            print("  Detected PTY wrappers:")
+            for wrapper in found_wrappers:
+                print(f"    - {wrapper}")
+        else:
+            print("  No common PTY wrappers detected")
+
 def check_file_system():
     """Check file system for Claude-related files."""
     print_section("File System Analysis")
@@ -385,6 +551,7 @@ def main():
     check_environment()
     check_processes()
     check_claude_launch_commands()
+    check_terminal_environment()
     check_docker()
     check_python_runtime()
     check_network_connections()

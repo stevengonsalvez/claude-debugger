@@ -314,5 +314,101 @@
       "command": "git add -A && git commit -m \"$(cat <<'EOF'\nUpdate logs/stop.json with session data\n\n\ud83e\udd16 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\" && git push origin main",
       "description": "Commit and push logs update"
     }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "python3 claude-debugger.py",
+      "description": "Run the claude debugger script"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "TodoWrite",
+    "tool_input": {
+      "todos": [
+        {
+          "content": "Add PTY/tmux/screen detection to debugger",
+          "status": "in_progress",
+          "activeForm": "Adding PTY/tmux/screen detection"
+        }
+      ]
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Edit",
+    "tool_input": {
+      "file_path": "/Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py",
+      "old_string": "def check_file_system():\n    \"\"\"Check file system for Claude-related files.\"\"\"\n    print_section(\"File System Analysis\")",
+      "new_string": "def check_terminal_environment():\n    \"\"\"Check for terminal multiplexers and PTY setup.\"\"\"\n    print_section(\"Terminal Environment & PTY Analysis\")\n    \n    # Check if running in tmux\n    tmux_env = os.environ.get('TMUX')\n    if tmux_env:\n        print(\"\u2713 Running inside TMUX session\")\n        print(f\"  TMUX socket: {tmux_env}\")\n        \n        # Get tmux session info\n        stdout, stderr, code = run_command(\"tmux display-message -p '#S:#W.#P'\")\n        if stdout:\n            print(f\"  Session info: {stdout}\")\n        \n        # Check tmux panes\n        stdout, stderr, code = run_command(\"tmux list-panes -F '#{pane_pid} #{pane_tty} #{pane_current_command}'\")\n        if stdout:\n            print(\"  Active panes:\")\n            for line in stdout.split('\\n')[:5]:  # Limit to 5 panes\n                if line.strip():\n                    print(f\"    {line}\")\n    else:\n        print(\"\u2717 Not running in TMUX\")\n    \n    # Check if running in screen\n    screen_env = os.environ.get('STY')\n    if screen_env:\n        print(\"\\n\u2713 Running inside GNU Screen session\")\n        print(f\"  Session: {screen_env}\")\n        \n        # Get screen info\n        stdout, stderr, code = run_command(\"screen -ls\")\n        if stdout:\n            print(\"  Screen sessions:\")\n            for line in stdout.split('\\n'):\n                if '\\t' in line:\n                    print(f\"    {line.strip()}\")\n    else:\n        print(\"\u2717 Not running in GNU Screen\")\n    \n    # Check terminal type and PTY\n    print(\"\\nTerminal Information:\")\n    term = os.environ.get('TERM', 'unknown')\n    print(f\"  TERM: {term}\")\n    \n    term_program = os.environ.get('TERM_PROGRAM')\n    if term_program:\n        print(f\"  Terminal Program: {term_program}\")\n    \n    term_session_id = os.environ.get('TERM_SESSION_ID')\n    if term_session_id:\n        print(f\"  Terminal Session ID: {term_session_id}\")\n    \n    # Check TTY/PTY\n    print(\"\\nTTY/PTY Information:\")\n    stdout, stderr, code = run_command(\"tty\")\n    if stdout:\n        print(f\"  Current TTY: {stdout}\")\n        \n        # Check if it's a pseudo-terminal\n        if '/dev/pts/' in stdout or '/dev/ttys' in stdout.lower():\n            print(\"  Type: Pseudo-terminal (PTY)\")\n        elif '/dev/tty' in stdout:\n            print(\"  Type: Hardware terminal\")\n        else:\n            print(\"  Type: Unknown\")\n    \n    # Check process tree to detect PTY wrappers\n    print(\"\\nProcess Tree Analysis:\")\n    \n    # Get current process ID\n    current_pid = os.getpid()\n    print(f\"  Current script PID: {current_pid}\")\n    \n    # Walk up the process tree\n    stdout, stderr, code = run_command(f\"ps -o pid,ppid,comm,tty -p {current_pid}\")\n    if stdout:\n        print(\"  Current process:\")\n        print(f\"    {stdout.split(chr(10))[1] if len(stdout.split(chr(10))) > 1 else stdout}\")\n    \n    # Get parent processes\n    ppid = current_pid\n    for i in range(5):  # Check up to 5 levels\n        stdout, stderr, code = run_command(f\"ps -o ppid= -p {ppid} 2>/dev/null\")\n        if stdout and stdout.strip():\n            ppid = stdout.strip()\n            stdout2, stderr2, code2 = run_command(f\"ps -o pid,ppid,comm,tty -p {ppid} 2>/dev/null | tail -1\")\n            if stdout2:\n                print(f\"  Parent level {i+1}: {stdout2.strip()}\")\n        else:\n            break\n    \n    # Check for PTY allocation for Claude processes\n    print(\"\\nClaude Process PTY Analysis:\")\n    stdout, stderr, code = run_command(\"ps aux | grep -E 'claude' | grep -v grep | grep -v 'claude-debugger'\")\n    if stdout:\n        for line in stdout.split('\\n')[:5]:  # Limit to 5 processes\n            if line.strip() and 'claude' in line.lower():\n                parts = line.split(None, 10)\n                if len(parts) >= 2:\n                    pid = parts[1]\n                    \n                    # Get TTY for this process\n                    stdout2, stderr2, code2 = run_command(f\"ps -o tty= -p {pid} 2>/dev/null\")\n                    if stdout2 and stdout2.strip() != '?':\n                        print(f\"  PID {pid}: TTY {stdout2.strip()}\")\n                        \n                        # Check if it's a PTY\n                        if 's0' in stdout2 or 'pts' in stdout2:\n                            # Get more PTY info\n                            stdout3, stderr3, code3 = run_command(f\"lsof -p {pid} 2>/dev/null | grep -E '(CHR|pts|tty)' | head -3\")\n                            if stdout3:\n                                print(f\"    PTY devices:\")\n                                for pty_line in stdout3.split('\\n'):\n                                    if pty_line.strip():\n                                        print(f\"      {pty_line.strip()[:100]}...\")\n    \n    # Check for SSH sessions\n    print(\"\\nSSH Session Detection:\")\n    ssh_client = os.environ.get('SSH_CLIENT')\n    ssh_tty = os.environ.get('SSH_TTY')\n    if ssh_client or ssh_tty:\n        print(\"\u2713 Running over SSH\")\n        if ssh_client:\n            print(f\"  SSH Client: {ssh_client}\")\n        if ssh_tty:\n            print(f\"  SSH TTY: {ssh_tty}\")\n    else:\n        print(\"\u2717 Not an SSH session\")\n    \n    # Check for container PTY\n    print(\"\\nContainer PTY Detection:\")\n    \n    # Docker container check\n    stdout, stderr, code = run_command(\"cat /proc/1/cgroup 2>/dev/null | grep -i docker\")\n    if stdout:\n        print(\"\u2713 Running in Docker container with PTY\")\n    \n    # Kubernetes pod check  \n    k8s_service = os.environ.get('KUBERNETES_SERVICE_HOST')\n    if k8s_service:\n        print(f\"\u2713 Running in Kubernetes pod\")\n        print(f\"  Service Host: {k8s_service}\")\n    \n    # Check for PTY wrapper programs\n    print(\"\\nPTY Wrapper Detection:\")\n    wrapper_commands = ['expect', 'script', 'unbuffer', 'pty', 'socat', 'screen', 'tmux', 'dtach']\n    \n    stdout, stderr, code = run_command(\"ps aux\")\n    if stdout:\n        found_wrappers = []\n        for wrapper in wrapper_commands:\n            if wrapper in stdout.lower():\n                # Count occurrences\n                count = stdout.lower().count(wrapper)\n                if count > 0:\n                    found_wrappers.append(f\"{wrapper} ({count} process{'es' if count > 1 else ''})\")\n        \n        if found_wrappers:\n            print(\"  Detected PTY wrappers:\")\n            for wrapper in found_wrappers:\n                print(f\"    - {wrapper}\")\n        else:\n            print(\"  No common PTY wrappers detected\")\n\ndef check_file_system():\n    \"\"\"Check file system for Claude-related files.\"\"\"\n    print_section(\"File System Analysis\")"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Edit",
+    "tool_input": {
+      "file_path": "/Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py",
+      "old_string": "    # Run all checks\n    check_claude_cli()\n    check_claude_sdk()\n    check_environment()\n    check_processes()\n    check_claude_launch_commands()\n    check_docker()\n    check_python_runtime()\n    check_network_connections()\n    check_file_system()",
+      "new_string": "    # Run all checks\n    check_claude_cli()\n    check_claude_sdk()\n    check_environment()\n    check_processes()\n    check_claude_launch_commands()\n    check_terminal_environment()\n    check_docker()\n    check_python_runtime()\n    check_network_connections()\n    check_file_system()"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "python3 claude-debugger.py | grep -A 80 \"Terminal Environment\"",
+      "description": "Test terminal environment detection"
+    }
+  },
+  {
+    "session_id": "b0dc6435-8e2c-452d-b20f-66e78d4d33f5",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/b0dc6435-8e2c-452d-b20f-66e78d4d33f5.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "TodoWrite",
+    "tool_input": {
+      "todos": [
+        {
+          "content": "Add PTY/tmux/screen detection to debugger",
+          "status": "completed",
+          "activeForm": "Adding PTY/tmux/screen detection"
+        }
+      ]
+    }
+  },
+  {
+    "session_id": "b0dc6435-8e2c-452d-b20f-66e78d4d33f5",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/b0dc6435-8e2c-452d-b20f-66e78d4d33f5.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git add -A && git commit -m \"$(cat <<'EOF'\nAdd PTY/terminal environment detection to debugger\n\n- Detects tmux, screen, and other terminal multiplexers\n- Shows process tree hierarchy to trace PTY wrappers\n- Analyzes PTY allocation for each Claude process\n- Detects SSH sessions and container environments\n- Identifies common PTY wrapper programs\n- Shows terminal type and program information\n\n\ud83e\udd16 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\" && git push origin main",
+      "description": "Commit and push PTY detection enhancements"
+    }
   }
 ]

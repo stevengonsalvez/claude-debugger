@@ -38,5 +38,37 @@
     "permission_mode": "bypassPermissions",
     "hook_event_name": "UserPromptSubmit",
     "prompt": "can yo push it upstream"
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "can you run it here and report "
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "If there was a tmux or pty setup , how can I detect that , like pty interface on top of running the REPL cli ?"
+  },
+  {
+    "session_id": "b0dc6435-8e2c-452d-b20f-66e78d4d33f5",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/b0dc6435-8e2c-452d-b20f-66e78d4d33f5.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "contunye"
+  },
+  {
+    "session_id": "b0dc6435-8e2c-452d-b20f-66e78d4d33f5",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/b0dc6435-8e2c-452d-b20f-66e78d4d33f5.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "continue"
   }
 ]

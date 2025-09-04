@@ -5,5 +5,12 @@
     "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
     "hook_event_name": "SessionStart",
     "source": "startup"
+  },
+  {
+    "session_id": "b0dc6435-8e2c-452d-b20f-66e78d4d33f5",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/b0dc6435-8e2c-452d-b20f-66e78d4d33f5.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "hook_event_name": "SessionStart",
+    "source": "resume"
   }
 ]
