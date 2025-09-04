@@ -156,6 +156,133 @@ def check_processes():
                 print(f"  {line[:150]}...")  # Truncate long lines
     else:
         print("No Claude-related processes found")
+    
+def check_claude_launch_commands():
+    """Check how Claude CLI sessions were launched."""
+    print_section("Claude CLI Launch Commands")
+    
+    # Get detailed process info for claude commands with full command line
+    stdout, stderr, code = run_command("ps auxww | grep -E 'claude' | grep -v grep | grep -v 'Claude.app'")
+    
+    if stdout:
+        print("Active Claude CLI sessions and their launch commands:")
+        print()
+        
+        sessions = []
+        for line in stdout.split('\n'):
+            if line.strip() and 'claude' in line:
+                # Parse the ps output
+                parts = line.split(None, 10)  # Split into max 11 parts
+                if len(parts) >= 11:
+                    pid = parts[1]
+                    start_time = parts[8]
+                    cpu_time = parts[9]
+                    cmd = parts[10]
+                    
+                    # Filter for actual claude commands (not helpers/etc)
+                    if 'claude' in cmd and not 'VibeTunnel' in cmd and not 'claude-monitor' in cmd and not 'claude-debugger' in cmd:
+                        sessions.append({
+                            'pid': pid,
+                            'start_time': start_time,
+                            'cpu_time': cpu_time,
+                            'command': cmd.strip()
+                        })
+        
+        if sessions:
+            for i, session in enumerate(sessions, 1):
+                print(f"Session {i}:")
+                print(f"  PID: {session['pid']}")
+                print(f"  Started: {session['start_time']}")
+                print(f"  CPU Time: {session['cpu_time']}")
+                print(f"  Command: {session['command']}")
+                
+                # Parse command line arguments
+                if ' -' in session['command']:
+                    print("  Detected arguments:")
+                    cmd_parts = session['command'].split()
+                    j = 0
+                    while j < len(cmd_parts):
+                        part = cmd_parts[j]
+                        if part.startswith('-'):
+                            # Get the flag and its value if present
+                            flag = part
+                            value = ""
+                            if j + 1 < len(cmd_parts) and not cmd_parts[j + 1].startswith('-'):
+                                value = cmd_parts[j + 1]
+                                j += 1  # Skip the value in next iteration
+                            
+                            if flag == '-p' or flag == '--project':
+                                print(f"    Project mode: {value if value else 'Yes'}")
+                            elif flag == '-c' or flag == '--config':
+                                print(f"    Config file: {value}")
+                            elif flag == '-m' or flag == '--model':
+                                print(f"    Model override: {value}")
+                            elif flag == '--debug':
+                                print("    Debug mode: Enabled")
+                            elif flag == '--no-telemetry':
+                                print("    Telemetry: Disabled")
+                            elif flag == '--no-color':
+                                print("    Color output: Disabled")
+                            elif flag == '--json':
+                                print("    JSON output: Enabled")
+                            elif flag == '-h' or flag == '--help':
+                                print("    Help mode")
+                            elif flag == '-v' or flag == '--version':
+                                print("    Version check")
+                        j += 1
+                else:
+                    print("  Mode: Interactive (no arguments)")
+                
+                # Check working directory for this PID
+                stdout2, stderr2, code2 = run_command(f"lsof -p {session['pid']} 2>/dev/null | grep 'cwd' | awk '{{print $NF}}' | head -1")
+                if stdout2:
+                    print(f"  Working Directory: {stdout2}")
+                
+                print()
+        else:
+            print("No active Claude CLI command sessions found")
+    else:
+        print("No Claude CLI processes detected")
+    
+    # Check for parent shell sessions that might have launched Claude
+    print("\nChecking for parent shell sessions:")
+    stdout, stderr, code = run_command("ps aux | grep -E '(zsh|bash).*claude' | grep -v grep")
+    if stdout:
+        print("Shell sessions that may have launched Claude:")
+        for line in stdout.split('\n')[:5]:  # Limit to 5 lines
+            if line.strip():
+                print(f"  {line[:120]}...")
+    
+    # Check command history for recent Claude commands
+    print("\nRecent Claude commands from shell history:")
+    
+    # Try different shell history files
+    history_files = [
+        Path.home() / ".zsh_history",
+        Path.home() / ".bash_history",
+        Path.home() / ".history",
+    ]
+    
+    found_history = False
+    for history_file in history_files:
+        if history_file.exists():
+            try:
+                stdout, stderr, code = run_command(f"tail -1000 {history_file} 2>/dev/null | grep '^claude' | tail -5")
+                if stdout:
+                    found_history = True
+                    print(f"  From {history_file.name}:")
+                    for line in stdout.split('\n'):
+                        if line.strip():
+                            # Clean up zsh history format if present
+                            if ': ' in line and ';' in line:
+                                # zsh format: : timestamp:0;command
+                                line = line.split(';', 1)[1] if ';' in line else line
+                            print(f"    {line.strip()}")
+            except:
+                pass
+    
+    if not found_history:
+        print("  No recent Claude commands found in shell history")
 
 def check_docker():
     """Check if running in Docker and for Claude-related containers."""
@@ -257,6 +384,7 @@ def main():
     check_claude_sdk()
     check_environment()
     check_processes()
+    check_claude_launch_commands()
     check_docker()
     check_python_runtime()
     check_network_connections()

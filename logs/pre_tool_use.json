@@ -1,0 +1,306 @@
+[
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "TodoWrite",
+    "tool_input": {
+      "todos": [
+        {
+          "content": "Create claude-debugger.py script in repository",
+          "status": "in_progress",
+          "activeForm": "Creating claude-debugger.py script"
+        }
+      ]
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Write",
+    "tool_input": {
+      "file_path": "/Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py",
+      "content": "#!/usr/bin/env python3\n\"\"\"\nClaude Code Setup Debugger\nThis script helps identify whether Claude Code SDK or CLI is being used in the environment.\n\"\"\"\n\nimport os\nimport sys\nimport subprocess\nimport json\nimport shutil\nfrom pathlib import Path\nimport importlib.util\n\ndef run_command(cmd):\n    \"\"\"Run a shell command and return output.\"\"\"\n    try:\n        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)\n        return result.stdout.strip(), result.stderr.strip(), result.returncode\n    except subprocess.TimeoutExpired:\n        return \"\", \"Command timed out\", 1\n    except Exception as e:\n        return \"\", str(e), 1\n\ndef print_section(title):\n    \"\"\"Print a formatted section header.\"\"\"\n    print(f\"\\n{'='*60}\")\n    print(f\" {title}\")\n    print('='*60)\n\ndef check_claude_cli():\n    \"\"\"Check for Claude Code CLI installation and configuration.\"\"\"\n    print_section(\"Claude Code CLI Check\")\n    \n    # Check if claude command exists\n    claude_path = shutil.which(\"claude\")\n    if claude_path:\n        print(f\"\u2713 Claude CLI found at: {claude_path}\")\n        \n        # Get version\n        stdout, stderr, code = run_command(\"claude --version\")\n        if code == 0:\n            print(f\"  Version: {stdout}\")\n        \n        # Check for config files\n        config_paths = [\n            Path.home() / \".claude\" / \"config.json\",\n            Path.home() / \".config\" / \"claude\" / \"config.json\",\n            Path(\"/etc/claude/config.json\"),\n        ]\n        \n        for config_path in config_paths:\n            if config_path.exists():\n                print(f\"  Config found: {config_path}\")\n                try:\n                    with open(config_path, 'r') as f:\n                        config = json.load(f)\n                        # Don't print sensitive info, just structure\n                        print(f\"    Config keys: {list(config.keys())}\")\n                except Exception as e:\n                    print(f\"    Could not read config: {e}\")\n    else:\n        print(\"\u2717 Claude CLI not found in PATH\")\n    \n    # Check for common CLI installation directories\n    cli_dirs = [\n        \"/usr/local/bin/claude\",\n        \"/usr/bin/claude\",\n        \"/opt/claude/bin/claude\",\n        Path.home() / \".local\" / \"bin\" / \"claude\",\n    ]\n    \n    for cli_dir in cli_dirs:\n        if Path(cli_dir).exists():\n            print(f\"  Found CLI binary at: {cli_dir}\")\n\ndef check_claude_sdk():\n    \"\"\"Check for Claude Code SDK installation.\"\"\"\n    print_section(\"Claude Code SDK Check\")\n    \n    # Check for Python SDK\n    try:\n        # Try to import claude_code or similar packages\n        sdk_packages = [\n            \"claude_code\",\n            \"claude_sdk\",\n            \"anthropic_claude\",\n            \"anthropic\",\n            \"claudecode\",\n        ]\n        \n        found_sdks = []\n        for package in sdk_packages:\n            spec = importlib.util.find_spec(package)\n            if spec:\n                found_sdks.append(package)\n                print(f\"\u2713 Python package '{package}' found\")\n                \n                # Try to get version\n                try:\n                    module = __import__(package)\n                    if hasattr(module, '__version__'):\n                        print(f\"  Version: {module.__version__}\")\n                    print(f\"  Location: {spec.origin}\")\n                except Exception as e:\n                    print(f\"  Could not load module: {e}\")\n        \n        if not found_sdks:\n            print(\"\u2717 No Claude SDK Python packages found\")\n    except Exception as e:\n        print(f\"Error checking Python packages: {e}\")\n    \n    # Check pip list for claude-related packages\n    stdout, stderr, code = run_command(\"pip list | grep -i claude\")\n    if stdout:\n        print(\"\\nInstalled pip packages with 'claude':\")\n        print(stdout)\n    \n    # Check npm for Node.js SDK\n    stdout, stderr, code = run_command(\"npm list -g --depth=0 | grep -i claude\")\n    if stdout:\n        print(\"\\nGlobal npm packages with 'claude':\")\n        print(stdout)\n\ndef check_environment():\n    \"\"\"Check environment variables related to Claude.\"\"\"\n    print_section(\"Environment Variables\")\n    \n    claude_env_vars = []\n    for key, value in os.environ.items():\n        if 'CLAUDE' in key.upper() or 'ANTHROPIC' in key.upper():\n            # Mask potential API keys\n            if 'KEY' in key.upper() or 'TOKEN' in key.upper() or 'SECRET' in key.upper():\n                masked_value = value[:4] + '...' + value[-4:] if len(value) > 8 else '***'\n                claude_env_vars.append(f\"{key}={masked_value}\")\n            else:\n                claude_env_vars.append(f\"{key}={value}\")\n    \n    if claude_env_vars:\n        print(\"Claude/Anthropic related environment variables:\")\n        for var in claude_env_vars:\n            print(f\"  {var}\")\n    else:\n        print(\"No Claude/Anthropic environment variables found\")\n\ndef check_processes():\n    \"\"\"Check for running Claude-related processes.\"\"\"\n    print_section(\"Running Processes\")\n    \n    # Check for claude processes\n    stdout, stderr, code = run_command(\"ps aux | grep -i claude | grep -v grep\")\n    if stdout:\n        print(\"Claude-related processes:\")\n        for line in stdout.split('\\n'):\n            if line.strip():\n                print(f\"  {line[:150]}...\")  # Truncate long lines\n    else:\n        print(\"No Claude-related processes found\")\n\ndef check_docker():\n    \"\"\"Check if running in Docker and for Claude-related containers.\"\"\"\n    print_section(\"Docker/Container Check\")\n    \n    # Check if we're in a container\n    if Path(\"/.dockerenv\").exists():\n        print(\"\u2713 Running inside a Docker container\")\n    elif Path(\"/run/.containerenv\").exists():\n        print(\"\u2713 Running inside a container (Podman/other)\")\n    else:\n        print(\"\u2717 Not running in a container (or container type not detected)\")\n    \n    # Check for Claude-related Docker images/containers\n    stdout, stderr, code = run_command(\"docker ps 2>/dev/null | grep -i claude\")\n    if code == 0 and stdout:\n        print(\"Claude-related Docker containers:\")\n        print(stdout)\n\ndef check_python_runtime():\n    \"\"\"Check Python runtime for Claude SDK usage.\"\"\"\n    print_section(\"Python Runtime Analysis\")\n    \n    # Check imported modules\n    imported_modules = [name for name in sys.modules.keys() if 'claude' in name.lower() or 'anthropic' in name.lower()]\n    if imported_modules:\n        print(\"Currently imported Claude/Anthropic modules:\")\n        for mod in imported_modules:\n            print(f\"  {mod}\")\n    else:\n        print(\"No Claude/Anthropic modules currently imported\")\n    \n    # Check sys.path for Claude-related directories\n    claude_paths = [p for p in sys.path if 'claude' in p.lower() or 'anthropic' in p.lower()]\n    if claude_paths:\n        print(\"\\nClaude-related paths in sys.path:\")\n        for path in claude_paths:\n            print(f\"  {path}\")\n\ndef check_network_connections():\n    \"\"\"Check for network connections to Anthropic endpoints.\"\"\"\n    print_section(\"Network Connections\")\n    \n    # Check for connections to Anthropic API\n    stdout, stderr, code = run_command(\"netstat -an 2>/dev/null | grep -E '(api.anthropic|claude.ai)' || ss -an 2>/dev/null | grep -E '(api.anthropic|claude.ai)'\")\n    if stdout:\n        print(\"Connections to Anthropic endpoints:\")\n        print(stdout)\n    else:\n        print(\"No active connections to Anthropic endpoints detected\")\n    \n    # Check DNS cache for Anthropic domains\n    stdout, stderr, code = run_command(\"getent hosts api.anthropic.com claude.ai 2>/dev/null\")\n    if stdout:\n        print(\"\\nDNS lookups for Anthropic domains:\")\n        print(stdout)\n\ndef check_file_system():\n    \"\"\"Check file system for Claude-related files.\"\"\"\n    print_section(\"File System Analysis\")\n    \n    # Common directories to check\n    dirs_to_check = [\n        Path.home() / \".claude\",\n        Path.home() / \".config\" / \"claude\",\n        Path(\"/opt/claude\"),\n        Path(\"/usr/local/claude\"),\n        Path(\"/tmp\"),\n    ]\n    \n    for dir_path in dirs_to_check:\n        if dir_path.exists():\n            try:\n                claude_files = list(dir_path.glob(\"*claude*\"))\n                if claude_files:\n                    print(f\"\\nClaude-related files in {dir_path}:\")\n                    for file in claude_files[:10]:  # Limit to 10 files\n                        print(f\"  {file}\")\n            except PermissionError:\n                print(f\"Permission denied accessing {dir_path}\")\n\ndef main():\n    \"\"\"Main execution function.\"\"\"\n    print(\"=\"*60)\n    print(\" Claude Code Setup Debugger\")\n    print(\" Detecting whether SDK or CLI is being used\")\n    print(\"=\"*60)\n    \n    # System info\n    print_section(\"System Information\")\n    print(f\"Python version: {sys.version}\")\n    print(f\"Platform: {sys.platform}\")\n    stdout, _, _ = run_command(\"uname -a\")\n    if stdout:\n        print(f\"System: {stdout}\")\n    \n    # Run all checks\n    check_claude_cli()\n    check_claude_sdk()\n    check_environment()\n    check_processes()\n    check_docker()\n    check_python_runtime()\n    check_network_connections()\n    check_file_system()\n    \n    # Summary\n    print_section(\"Summary\")\n    print(\"Review the above information to determine your Claude Code setup.\")\n    print(\"Key indicators:\")\n    print(\"- CLI: Look for 'claude' binary in PATH, config files in ~/.claude\")\n    print(\"- SDK: Look for Python/Node packages, imported modules\")\n    print(\"- Both setups may use ANTHROPIC_API_KEY environment variable\")\n    print(\"\\nFor e2b sandboxes specifically:\")\n    print(\"- Check if code is being executed via subprocess calls to 'claude' command\")\n    print(\"- Or if Python/Node SDK is being imported and used directly\")\n\nif __name__ == \"__main__\":\n    main()"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "chmod +x claude-debugger.py",
+      "description": "Make script executable"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "TodoWrite",
+    "tool_input": {
+      "todos": [
+        {
+          "content": "Create claude-debugger.py script in repository",
+          "status": "completed",
+          "activeForm": "Creating claude-debugger.py script"
+        }
+      ]
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "python3 claude-debugger.py",
+      "description": "Run the Claude debugger script"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "TodoWrite",
+    "tool_input": {
+      "todos": [
+        {
+          "content": "Commit claude-debugger.py script",
+          "status": "in_progress",
+          "activeForm": "Committing claude-debugger.py script"
+        },
+        {
+          "content": "Push changes to remote repository",
+          "status": "pending",
+          "activeForm": "Pushing changes to remote"
+        }
+      ]
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git status",
+      "description": "Check git status"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git add claude-debugger.py",
+      "description": "Stage claude-debugger.py for commit"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git commit -m \"$(cat <<'EOF'\nAdd Claude Code setup debugger script\n\nThis script helps identify whether Claude Code SDK or CLI is being used\nby checking for CLI binaries, SDK packages, environment variables, and\nrunning processes.\n\n\ud83e\udd16 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\"",
+      "description": "Create commit with debugger script"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "TodoWrite",
+    "tool_input": {
+      "todos": [
+        {
+          "content": "Commit claude-debugger.py script",
+          "status": "completed",
+          "activeForm": "Committing claude-debugger.py script"
+        },
+        {
+          "content": "Push changes to remote repository",
+          "status": "in_progress",
+          "activeForm": "Pushing changes to remote"
+        }
+      ]
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git push origin main",
+      "description": "Push commits to remote repository"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "TodoWrite",
+    "tool_input": {
+      "todos": [
+        {
+          "content": "Commit claude-debugger.py script",
+          "status": "completed",
+          "activeForm": "Committing claude-debugger.py script"
+        },
+        {
+          "content": "Push changes to remote repository",
+          "status": "completed",
+          "activeForm": "Pushing changes to remote"
+        }
+      ]
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "TodoWrite",
+    "tool_input": {
+      "todos": [
+        {
+          "content": "Enhance script to show Claude CLI launch commands",
+          "status": "in_progress",
+          "activeForm": "Enhancing script to show launch commands"
+        }
+      ]
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Read",
+    "tool_input": {
+      "file_path": "/Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Edit",
+    "tool_input": {
+      "file_path": "/Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py",
+      "old_string": "def check_processes():\n    \"\"\"Check for running Claude-related processes.\"\"\"\n    print_section(\"Running Processes\")\n    \n    # Check for claude processes\n    stdout, stderr, code = run_command(\"ps aux | grep -i claude | grep -v grep\")\n    if stdout:\n        print(\"Claude-related processes:\")\n        for line in stdout.split('\\n'):\n            if line.strip():\n                print(f\"  {line[:150]}...\")  # Truncate long lines\n    else:\n        print(\"No Claude-related processes found\")",
+      "new_string": "def check_processes():\n    \"\"\"Check for running Claude-related processes.\"\"\"\n    print_section(\"Running Processes\")\n    \n    # Check for claude processes\n    stdout, stderr, code = run_command(\"ps aux | grep -i claude | grep -v grep\")\n    if stdout:\n        print(\"Claude-related processes:\")\n        for line in stdout.split('\\n'):\n            if line.strip():\n                print(f\"  {line[:150]}...\")  # Truncate long lines\n    else:\n        print(\"No Claude-related processes found\")\n    \ndef check_claude_launch_commands():\n    \"\"\"Check how Claude CLI sessions were launched.\"\"\"\n    print_section(\"Claude CLI Launch Commands\")\n    \n    # Get detailed process info for claude commands\n    stdout, stderr, code = run_command(\"ps auxww | grep -E '^.*claude(\\\\s|$)' | grep -v grep\")\n    \n    if stdout:\n        print(\"Active Claude CLI sessions and their launch commands:\")\n        print()\n        \n        sessions = []\n        for line in stdout.split('\\n'):\n            if line.strip() and 'claude' in line:\n                # Parse the ps output\n                parts = line.split(None, 10)  # Split into max 11 parts\n                if len(parts) >= 11:\n                    pid = parts[1]\n                    cmd = parts[10]\n                    \n                    # Filter for actual claude commands (not helpers/etc)\n                    if cmd.strip().startswith('claude'):\n                        sessions.append({\n                            'pid': pid,\n                            'command': cmd.strip()\n                        })\n        \n        if sessions:\n            for i, session in enumerate(sessions, 1):\n                print(f\"Session {i}:\")\n                print(f\"  PID: {session['pid']}\")\n                print(f\"  Command: {session['command']}\")\n                \n                # Parse command line arguments\n                if ' -' in session['command']:\n                    print(\"  Detected arguments:\")\n                    cmd_parts = session['command'].split()\n                    for j, part in enumerate(cmd_parts[1:], 1):\n                        if part.startswith('-'):\n                            # Get the flag and its value if present\n                            flag = part\n                            value = \"\"\n                            if j < len(cmd_parts) - 1 and not cmd_parts[j+1].startswith('-'):\n                                value = cmd_parts[j+1]\n                            \n                            if flag == '-p' or flag == '--project':\n                                print(f\"    Project mode: {value if value else 'Yes'}\")\n                            elif flag == '-c' or flag == '--config':\n                                print(f\"    Config file: {value}\")\n                            elif flag == '-m' or flag == '--model':\n                                print(f\"    Model override: {value}\")\n                            elif flag == '--debug':\n                                print(\"    Debug mode: Enabled\")\n                            elif flag == '--no-telemetry':\n                                print(\"    Telemetry: Disabled\")\n                            elif flag == '--no-color':\n                                print(\"    Color output: Disabled\")\n                            elif flag == '--json':\n                                print(\"    JSON output: Enabled\")\n                print()\n        else:\n            print(\"No active Claude CLI command sessions found\")\n    else:\n        print(\"No Claude CLI processes detected\")\n    \n    # Check for parent shell sessions that might have launched Claude\n    print(\"\\nChecking for parent shell sessions:\")\n    stdout, stderr, code = run_command(\"ps aux | grep -E '(zsh|bash).*claude' | grep -v grep\")\n    if stdout:\n        print(\"Shell sessions that may have launched Claude:\")\n        for line in stdout.split('\\n')[:5]:  # Limit to 5 lines\n            if line.strip():\n                print(f\"  {line[:120]}...\")\n    \n    # Check command history for recent Claude commands\n    print(\"\\nRecent Claude commands from shell history:\")\n    \n    # Try different shell history files\n    history_files = [\n        Path.home() / \".zsh_history\",\n        Path.home() / \".bash_history\",\n        Path.home() / \".history\",\n    ]\n    \n    found_history = False\n    for history_file in history_files:\n        if history_file.exists():\n            try:\n                stdout, stderr, code = run_command(f\"tail -1000 {history_file} 2>/dev/null | grep '^claude' | tail -5\")\n                if stdout:\n                    found_history = True\n                    print(f\"  From {history_file.name}:\")\n                    for line in stdout.split('\\n'):\n                        if line.strip():\n                            # Clean up zsh history format if present\n                            if ': ' in line and ';' in line:\n                                # zsh format: : timestamp:0;command\n                                line = line.split(';', 1)[1] if ';' in line else line\n                            print(f\"    {line.strip()}\")\n            except:\n                pass\n    \n    if not found_history:\n        print(\"  No recent Claude commands found in shell history\")"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Edit",
+    "tool_input": {
+      "file_path": "/Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py",
+      "old_string": "    # Run all checks\n    check_claude_cli()\n    check_claude_sdk()\n    check_environment()\n    check_processes()\n    check_docker()\n    check_python_runtime()\n    check_network_connections()\n    check_file_system()",
+      "new_string": "    # Run all checks\n    check_claude_cli()\n    check_claude_sdk()\n    check_environment()\n    check_processes()\n    check_claude_launch_commands()\n    check_docker()\n    check_python_runtime()\n    check_network_connections()\n    check_file_system()"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "python3 claude-debugger.py | head -500",
+      "description": "Run enhanced debugger to check launch commands"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Edit",
+    "tool_input": {
+      "file_path": "/Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py",
+      "old_string": "def check_claude_launch_commands():\n    \"\"\"Check how Claude CLI sessions were launched.\"\"\"\n    print_section(\"Claude CLI Launch Commands\")\n    \n    # Get detailed process info for claude commands\n    stdout, stderr, code = run_command(\"ps auxww | grep -E '^.*claude(\\\\s|$)' | grep -v grep\")\n    \n    if stdout:\n        print(\"Active Claude CLI sessions and their launch commands:\")\n        print()\n        \n        sessions = []\n        for line in stdout.split('\\n'):\n            if line.strip() and 'claude' in line:\n                # Parse the ps output\n                parts = line.split(None, 10)  # Split into max 11 parts\n                if len(parts) >= 11:\n                    pid = parts[1]\n                    cmd = parts[10]\n                    \n                    # Filter for actual claude commands (not helpers/etc)\n                    if cmd.strip().startswith('claude'):\n                        sessions.append({\n                            'pid': pid,\n                            'command': cmd.strip()\n                        })\n        \n        if sessions:\n            for i, session in enumerate(sessions, 1):\n                print(f\"Session {i}:\")\n                print(f\"  PID: {session['pid']}\")\n                print(f\"  Command: {session['command']}\")\n                \n                # Parse command line arguments\n                if ' -' in session['command']:\n                    print(\"  Detected arguments:\")\n                    cmd_parts = session['command'].split()\n                    for j, part in enumerate(cmd_parts[1:], 1):\n                        if part.startswith('-'):\n                            # Get the flag and its value if present\n                            flag = part\n                            value = \"\"\n                            if j < len(cmd_parts) - 1 and not cmd_parts[j+1].startswith('-'):\n                                value = cmd_parts[j+1]\n                            \n                            if flag == '-p' or flag == '--project':\n                                print(f\"    Project mode: {value if value else 'Yes'}\")\n                            elif flag == '-c' or flag == '--config':\n                                print(f\"    Config file: {value}\")\n                            elif flag == '-m' or flag == '--model':\n                                print(f\"    Model override: {value}\")\n                            elif flag == '--debug':\n                                print(\"    Debug mode: Enabled\")\n                            elif flag == '--no-telemetry':\n                                print(\"    Telemetry: Disabled\")\n                            elif flag == '--no-color':\n                                print(\"    Color output: Disabled\")\n                            elif flag == '--json':\n                                print(\"    JSON output: Enabled\")\n                print()\n        else:\n            print(\"No active Claude CLI command sessions found\")\n    else:\n        print(\"No Claude CLI processes detected\")",
+      "new_string": "def check_claude_launch_commands():\n    \"\"\"Check how Claude CLI sessions were launched.\"\"\"\n    print_section(\"Claude CLI Launch Commands\")\n    \n    # Get detailed process info for claude commands with full command line\n    stdout, stderr, code = run_command(\"ps auxww | grep -E 'claude' | grep -v grep | grep -v 'Claude.app'\")\n    \n    if stdout:\n        print(\"Active Claude CLI sessions and their launch commands:\")\n        print()\n        \n        sessions = []\n        for line in stdout.split('\\n'):\n            if line.strip() and 'claude' in line:\n                # Parse the ps output\n                parts = line.split(None, 10)  # Split into max 11 parts\n                if len(parts) >= 11:\n                    pid = parts[1]\n                    start_time = parts[8]\n                    cpu_time = parts[9]\n                    cmd = parts[10]\n                    \n                    # Filter for actual claude commands (not helpers/etc)\n                    if 'claude' in cmd and not 'VibeTunnel' in cmd and not 'claude-monitor' in cmd and not 'claude-debugger' in cmd:\n                        sessions.append({\n                            'pid': pid,\n                            'start_time': start_time,\n                            'cpu_time': cpu_time,\n                            'command': cmd.strip()\n                        })\n        \n        if sessions:\n            for i, session in enumerate(sessions, 1):\n                print(f\"Session {i}:\")\n                print(f\"  PID: {session['pid']}\")\n                print(f\"  Started: {session['start_time']}\")\n                print(f\"  CPU Time: {session['cpu_time']}\")\n                print(f\"  Command: {session['command']}\")\n                \n                # Parse command line arguments\n                if ' -' in session['command']:\n                    print(\"  Detected arguments:\")\n                    cmd_parts = session['command'].split()\n                    j = 0\n                    while j < len(cmd_parts):\n                        part = cmd_parts[j]\n                        if part.startswith('-'):\n                            # Get the flag and its value if present\n                            flag = part\n                            value = \"\"\n                            if j + 1 < len(cmd_parts) and not cmd_parts[j + 1].startswith('-'):\n                                value = cmd_parts[j + 1]\n                                j += 1  # Skip the value in next iteration\n                            \n                            if flag == '-p' or flag == '--project':\n                                print(f\"    Project mode: {value if value else 'Yes'}\")\n                            elif flag == '-c' or flag == '--config':\n                                print(f\"    Config file: {value}\")\n                            elif flag == '-m' or flag == '--model':\n                                print(f\"    Model override: {value}\")\n                            elif flag == '--debug':\n                                print(\"    Debug mode: Enabled\")\n                            elif flag == '--no-telemetry':\n                                print(\"    Telemetry: Disabled\")\n                            elif flag == '--no-color':\n                                print(\"    Color output: Disabled\")\n                            elif flag == '--json':\n                                print(\"    JSON output: Enabled\")\n                            elif flag == '-h' or flag == '--help':\n                                print(\"    Help mode\")\n                            elif flag == '-v' or flag == '--version':\n                                print(\"    Version check\")\n                        j += 1\n                else:\n                    print(\"  Mode: Interactive (no arguments)\")\n                \n                # Check working directory for this PID\n                stdout2, stderr2, code2 = run_command(f\"lsof -p {session['pid']} 2>/dev/null | grep 'cwd' | awk '{{print $NF}}' | head -1\")\n                if stdout2:\n                    print(f\"  Working Directory: {stdout2}\")\n                \n                print()\n        else:\n            print(\"No active Claude CLI command sessions found\")\n    else:\n        print(\"No Claude CLI processes detected\")"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "python3 claude-debugger.py | grep -A 50 \"Claude CLI Launch Commands\"",
+      "description": "Test enhanced launch command detection"
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "TodoWrite",
+    "tool_input": {
+      "todos": [
+        {
+          "content": "Enhance script to show Claude CLI launch commands",
+          "status": "completed",
+          "activeForm": "Enhancing script to show launch commands"
+        }
+      ]
+    }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git add -A && git commit -m \"$(cat <<'EOF'\nEnhance debugger to show Claude CLI launch details\n\n- Added detection of Claude CLI launch commands and arguments\n- Shows PID, start time, CPU time for each session\n- Detects and parses command-line flags like -p, -m, --debug\n- Shows working directory for each Claude session\n- Improved filtering to exclude helper processes\n\n\ud83e\udd16 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\" && git push origin main",
+      "description": "Commit and push enhanced debugger"
+    }
+  }
+]

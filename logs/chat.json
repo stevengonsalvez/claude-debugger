@@ -1,0 +1,1835 @@
+[
+  {
+    "parentUuid": null,
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": "<session-start-hook>Git Status:\n## main...origin/main\n?? logs/\n\nChanges Summary:\n?? logs/</session-start-hook>"
+    },
+    "uuid": "abbed19e-b862-402f-a887-be4d34fe0492",
+    "timestamp": "2025-09-04T13:16:53.851Z"
+  },
+  {
+    "parentUuid": "abbed19e-b862-402f-a887-be4d34fe0492",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": "Add this code in a file for this repository #!/usr/bin/env python3\n\"\"\"\nClaude Code Setup Debugger\nThis script helps identify whether Claude Code SDK or CLI is being used in the environment.\n\"\"\"\n\nimport os\nimport sys\nimport subprocess\nimport json\nimport shutil\nfrom pathlib import Path\nimport importlib.util\n\ndef run_command(cmd):\n    \"\"\"Run a shell command and return output.\"\"\"\n    try:\n        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)\n        return result.stdout.strip(), result.stderr.strip(), result.returncode\n    except subprocess.TimeoutExpired:\n        return \"\", \"Command timed out\", 1\n    except Exception as e:\n        return \"\", str(e), 1\n\ndef print_section(title):\n    \"\"\"Print a formatted section header.\"\"\"\n    print(f\"\\n{'='*60}\")\n    print(f\" {title}\")\n    print('='*60)\n\ndef check_claude_cli():\n    \"\"\"Check for Claude Code CLI installation and configuration.\"\"\"\n    print_section(\"Claude Code CLI Check\")\n    \n    # Check if claude command exists\n    claude_path = shutil.which(\"claude\")\n    if claude_path:\n        print(f\"\u2713 Claude CLI found at: {claude_path}\")\n        \n        # Get version\n        stdout, stderr, code = run_command(\"claude --version\")\n        if code == 0:\n            print(f\"  Version: {stdout}\")\n        \n        # Check for config files\n        config_paths = [\n            Path.home() / \".claude\" / \"config.json\",\n            Path.home() / \".config\" / \"claude\" / \"config.json\",\n            Path(\"/etc/claude/config.json\"),\n        ]\n        \n        for config_path in config_paths:\n            if config_path.exists():\n                print(f\"  Config found: {config_path}\")\n                try:\n                    with open(config_path, 'r') as f:\n                        config = json.load(f)\n                        # Don't print sensitive info, just structure\n                        print(f\"    Config keys: {list(config.keys())}\")\n                except Exception as e:\n                    print(f\"    Could not read config: {e}\")\n    else:\n        print(\"\u2717 Claude CLI not found in PATH\")\n    \n    # Check for common CLI installation directories\n    cli_dirs = [\n        \"/usr/local/bin/claude\",\n        \"/usr/bin/claude\",\n        \"/opt/claude/bin/claude\",\n        Path.home() / \".local\" / \"bin\" / \"claude\",\n    ]\n    \n    for cli_dir in cli_dirs:\n        if Path(cli_dir).exists():\n            print(f\"  Found CLI binary at: {cli_dir}\")\n\ndef check_claude_sdk():\n    \"\"\"Check for Claude Code SDK installation.\"\"\"\n    print_section(\"Claude Code SDK Check\")\n    \n    # Check for Python SDK\n    try:\n        # Try to import claude_code or similar packages\n        sdk_packages = [\n            \"claude_code\",\n            \"claude_sdk\",\n            \"anthropic_claude\",\n            \"anthropic\",\n            \"claudecode\",\n        ]\n        \n        found_sdks = []\n        for package in sdk_packages:\n            spec = importlib.util.find_spec(package)\n            if spec:\n                found_sdks.append(package)\n                print(f\"\u2713 Python package '{package}' found\")\n                \n                # Try to get version\n                try:\n                    module = __import__(package)\n                    if hasattr(module, '__version__'):\n                        print(f\"  Version: {module.__version__}\")\n                    print(f\"  Location: {spec.origin}\")\n                except Exception as e:\n                    print(f\"  Could not load module: {e}\")\n        \n        if not found_sdks:\n            print(\"\u2717 No Claude SDK Python packages found\")\n    except Exception as e:\n        print(f\"Error checking Python packages: {e}\")\n    \n    # Check pip list for claude-related packages\n    stdout, stderr, code = run_command(\"pip list | grep -i claude\")\n    if stdout:\n        print(\"\\nInstalled pip packages with 'claude':\")\n        print(stdout)\n    \n    # Check npm for Node.js SDK\n    stdout, stderr, code = run_command(\"npm list -g --depth=0 | grep -i claude\")\n    if stdout:\n        print(\"\\nGlobal npm packages with 'claude':\")\n        print(stdout)\n\ndef check_environment():\n    \"\"\"Check environment variables related to Claude.\"\"\"\n    print_section(\"Environment Variables\")\n    \n    claude_env_vars = []\n    for key, value in os.environ.items():\n        if 'CLAUDE' in key.upper() or 'ANTHROPIC' in key.upper():\n            # Mask potential API keys\n            if 'KEY' in key.upper() or 'TOKEN' in key.upper() or 'SECRET' in key.upper():\n                masked_value = value[:4] + '...' + value[-4:] if len(value) > 8 else '***'\n                claude_env_vars.append(f\"{key}={masked_value}\")\n            else:\n                claude_env_vars.append(f\"{key}={value}\")\n    \n    if claude_env_vars:\n        print(\"Claude/Anthropic related environment variables:\")\n        for var in claude_env_vars:\n            print(f\"  {var}\")\n    else:\n        print(\"No Claude/Anthropic environment variables found\")\n\ndef check_processes():\n    \"\"\"Check for running Claude-related processes.\"\"\"\n    print_section(\"Running Processes\")\n    \n    # Check for claude processes\n    stdout, stderr, code = run_command(\"ps aux | grep -i claude | grep -v grep\")\n    if stdout:\n        print(\"Claude-related processes:\")\n        for line in stdout.split('\\n'):\n            if line.strip():\n                print(f\"  {line[:150]}...\")  # Truncate long lines\n    else:\n        print(\"No Claude-related processes found\")\n\ndef check_docker():\n    \"\"\"Check if running in Docker and for Claude-related containers.\"\"\"\n    print_section(\"Docker/Container Check\")\n    \n    # Check if we're in a container\n    if Path(\"/.dockerenv\").exists():\n        print(\"\u2713 Running inside a Docker container\")\n    elif Path(\"/run/.containerenv\").exists():\n        print(\"\u2713 Running inside a container (Podman/other)\")\n    else:\n        print(\"\u2717 Not running in a container (or container type not detected)\")\n    \n    # Check for Claude-related Docker images/containers\n    stdout, stderr, code = run_command(\"docker ps 2>/dev/null | grep -i claude\")\n    if code == 0 and stdout:\n        print(\"Claude-related Docker containers:\")\n        print(stdout)\n\ndef check_python_runtime():\n    \"\"\"Check Python runtime for Claude SDK usage.\"\"\"\n    print_section(\"Python Runtime Analysis\")\n    \n    # Check imported modules\n    imported_modules = [name for name in sys.modules.keys() if 'claude' in name.lower() or 'anthropic' in name.lower()]\n    if imported_modules:\n        print(\"Currently imported Claude/Anthropic modules:\")\n        for mod in imported_modules:\n            print(f\"  {mod}\")\n    else:\n        print(\"No Claude/Anthropic modules currently imported\")\n    \n    # Check sys.path for Claude-related directories\n    claude_paths = [p for p in sys.path if 'claude' in p.lower() or 'anthropic' in p.lower()]\n    if claude_paths:\n        print(\"\\nClaude-related paths in sys.path:\")\n        for path in claude_paths:\n            print(f\"  {path}\")\n\ndef check_network_connections():\n    \"\"\"Check for network connections to Anthropic endpoints.\"\"\"\n    print_section(\"Network Connections\")\n    \n    # Check for connections to Anthropic API\n    stdout, stderr, code = run_command(\"netstat -an 2>/dev/null | grep -E '(api.anthropic|claude.ai)' || ss -an 2>/dev/null | grep -E '(api.anthropic|claude.ai)'\")\n    if stdout:\n        print(\"Connections to Anthropic endpoints:\")\n        print(stdout)\n    else:\n        print(\"No active connections to Anthropic endpoints detected\")\n    \n    # Check DNS cache for Anthropic domains\n    stdout, stderr, code = run_command(\"getent hosts api.anthropic.com claude.ai 2>/dev/null\")\n    if stdout:\n        print(\"\\nDNS lookups for Anthropic domains:\")\n        print(stdout)\n\ndef check_file_system():\n    \"\"\"Check file system for Claude-related files.\"\"\"\n    print_section(\"File System Analysis\")\n    \n    # Common directories to check\n    dirs_to_check = [\n        Path.home() / \".claude\",\n        Path.home() / \".config\" / \"claude\",\n        Path(\"/opt/claude\"),\n        Path(\"/usr/local/claude\"),\n        Path(\"/tmp\"),\n    ]\n    \n    for dir_path in dirs_to_check:\n        if dir_path.exists():\n            try:\n                claude_files = list(dir_path.glob(\"*claude*\"))\n                if claude_files:\n                    print(f\"\\nClaude-related files in {dir_path}:\")\n                    for file in claude_files[:10]:  # Limit to 10 files\n                        print(f\"  {file}\")\n            except PermissionError:\n                print(f\"Permission denied accessing {dir_path}\")\n\ndef main():\n    \"\"\"Main execution function.\"\"\"\n    print(\"=\"*60)\n    print(\" Claude Code Setup Debugger\")\n    print(\" Detecting whether SDK or CLI is being used\")\n    print(\"=\"*60)\n    \n    # System info\n    print_section(\"System Information\")\n    print(f\"Python version: {sys.version}\")\n    print(f\"Platform: {sys.platform}\")\n    stdout, _, _ = run_command(\"uname -a\")\n    if stdout:\n        print(f\"System: {stdout}\")\n    \n    # Run all checks\n    check_claude_cli()\n    check_claude_sdk()\n    check_environment()\n    check_processes()\n    check_docker()\n    check_python_runtime()\n    check_network_connections()\n    check_file_system()\n    \n    # Summary\n    print_section(\"Summary\")\n    print(\"Review the above information to determine your Claude Code setup.\")\n    print(\"Key indicators:\")\n    print(\"- CLI: Look for 'claude' binary in PATH, config files in ~/.claude\")\n    print(\"- SDK: Look for Python/Node packages, imported modules\")\n    print(\"- Both setups may use ANTHROPIC_API_KEY environment variable\")\n    print(\"\\nFor e2b sandboxes specifically:\")\n    print(\"- Check if code is being executed via subprocess calls to 'claude' command\")\n    print(\"- Or if Python/Node SDK is being imported and used directly\")\n\nif __name__ == \"__main__\":\n    main()"
+    },
+    "uuid": "a361d891-7658-4db7-ae2a-2173d1f9bbde",
+    "timestamp": "2025-09-04T13:17:07.834Z"
+  },
+  {
+    "parentUuid": "a361d891-7658-4db7-ae2a-2173d1f9bbde",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01AdLebwvfjZQgQMG2imnHdA",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll add this debugging script to your repository to help identify whether Claude Code SDK or CLI is being used in the environment."
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 37260,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 37260,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoRavW4CPmxXHBpoYjXb",
+    "type": "assistant",
+    "uuid": "6baf1487-d5a8-4628-a10d-93b7d1b97fc1",
+    "timestamp": "2025-09-04T13:17:14.573Z"
+  },
+  {
+    "parentUuid": "6baf1487-d5a8-4628-a10d-93b7d1b97fc1",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01AdLebwvfjZQgQMG2imnHdA",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01UftwLTFLefVfG5hk2fwVxa",
+          "name": "TodoWrite",
+          "input": {
+            "todos": [
+              {
+                "content": "Create claude-debugger.py script in repository",
+                "activeForm": "Creating claude-debugger.py script",
+                "status": "in_progress"
+              }
+            ]
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 37260,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 37260,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoRavW4CPmxXHBpoYjXb",
+    "type": "assistant",
+    "uuid": "240ba4c4-e1f9-412d-940c-51bb84c7ebec",
+    "timestamp": "2025-09-04T13:17:15.866Z"
+  },
+  {
+    "parentUuid": "240ba4c4-e1f9-412d-940c-51bb84c7ebec",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:17:16.576Z",
+    "uuid": "e3615aca-6c2f-4940-b4d0-b533e9380e6f",
+    "toolUseID": "toolu_01UftwLTFLefVfG5hk2fwVxa",
+    "level": "info"
+  },
+  {
+    "parentUuid": "e3615aca-6c2f-4940-b4d0-b533e9380e6f",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01UftwLTFLefVfG5hk2fwVxa",
+          "type": "tool_result",
+          "content": "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable"
+        }
+      ]
+    },
+    "uuid": "40834495-7add-438c-a98c-6ef9288b6554",
+    "timestamp": "2025-09-04T13:17:16.616Z",
+    "toolUseResult": {
+      "oldTodos": [],
+      "newTodos": [
+        {
+          "content": "Create claude-debugger.py script in repository",
+          "status": "in_progress",
+          "activeForm": "Creating claude-debugger.py script"
+        }
+      ]
+    }
+  },
+  {
+    "parentUuid": "40834495-7add-438c-a98c-6ef9288b6554",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:TodoWrite\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:17:16.682Z",
+    "uuid": "9c3e594e-8ab7-4473-b09c-5adabd5e1c1b",
+    "toolUseID": "toolu_01UftwLTFLefVfG5hk2fwVxa",
+    "level": "info"
+  },
+  {
+    "parentUuid": "9c3e594e-8ab7-4473-b09c-5adabd5e1c1b",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:17:17.339Z",
+    "uuid": "263a6eab-3c85-4984-b195-e3071882d196",
+    "toolUseID": "toolu_01UftwLTFLefVfG5hk2fwVxa",
+    "level": "info"
+  },
+  {
+    "parentUuid": "263a6eab-3c85-4984-b195-e3071882d196",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01Qcp3MCnbs91byUiGT3C6sJ",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_017Y8oqBD2QCyQGc1o7wYAfb",
+          "name": "Write",
+          "input": {
+            "file_path": "/Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py",
+            "content": "#!/usr/bin/env python3\n\"\"\"\nClaude Code Setup Debugger\nThis script helps identify whether Claude Code SDK or CLI is being used in the environment.\n\"\"\"\n\nimport os\nimport sys\nimport subprocess\nimport json\nimport shutil\nfrom pathlib import Path\nimport importlib.util\n\ndef run_command(cmd):\n    \"\"\"Run a shell command and return output.\"\"\"\n    try:\n        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)\n        return result.stdout.strip(), result.stderr.strip(), result.returncode\n    except subprocess.TimeoutExpired:\n        return \"\", \"Command timed out\", 1\n    except Exception as e:\n        return \"\", str(e), 1\n\ndef print_section(title):\n    \"\"\"Print a formatted section header.\"\"\"\n    print(f\"\\n{'='*60}\")\n    print(f\" {title}\")\n    print('='*60)\n\ndef check_claude_cli():\n    \"\"\"Check for Claude Code CLI installation and configuration.\"\"\"\n    print_section(\"Claude Code CLI Check\")\n    \n    # Check if claude command exists\n    claude_path = shutil.which(\"claude\")\n    if claude_path:\n        print(f\"\u2713 Claude CLI found at: {claude_path}\")\n        \n        # Get version\n        stdout, stderr, code = run_command(\"claude --version\")\n        if code == 0:\n            print(f\"  Version: {stdout}\")\n        \n        # Check for config files\n        config_paths = [\n            Path.home() / \".claude\" / \"config.json\",\n            Path.home() / \".config\" / \"claude\" / \"config.json\",\n            Path(\"/etc/claude/config.json\"),\n        ]\n        \n        for config_path in config_paths:\n            if config_path.exists():\n                print(f\"  Config found: {config_path}\")\n                try:\n                    with open(config_path, 'r') as f:\n                        config = json.load(f)\n                        # Don't print sensitive info, just structure\n                        print(f\"    Config keys: {list(config.keys())}\")\n                except Exception as e:\n                    print(f\"    Could not read config: {e}\")\n    else:\n        print(\"\u2717 Claude CLI not found in PATH\")\n    \n    # Check for common CLI installation directories\n    cli_dirs = [\n        \"/usr/local/bin/claude\",\n        \"/usr/bin/claude\",\n        \"/opt/claude/bin/claude\",\n        Path.home() / \".local\" / \"bin\" / \"claude\",\n    ]\n    \n    for cli_dir in cli_dirs:\n        if Path(cli_dir).exists():\n            print(f\"  Found CLI binary at: {cli_dir}\")\n\ndef check_claude_sdk():\n    \"\"\"Check for Claude Code SDK installation.\"\"\"\n    print_section(\"Claude Code SDK Check\")\n    \n    # Check for Python SDK\n    try:\n        # Try to import claude_code or similar packages\n        sdk_packages = [\n            \"claude_code\",\n            \"claude_sdk\",\n            \"anthropic_claude\",\n            \"anthropic\",\n            \"claudecode\",\n        ]\n        \n        found_sdks = []\n        for package in sdk_packages:\n            spec = importlib.util.find_spec(package)\n            if spec:\n                found_sdks.append(package)\n                print(f\"\u2713 Python package '{package}' found\")\n                \n                # Try to get version\n                try:\n                    module = __import__(package)\n                    if hasattr(module, '__version__'):\n                        print(f\"  Version: {module.__version__}\")\n                    print(f\"  Location: {spec.origin}\")\n                except Exception as e:\n                    print(f\"  Could not load module: {e}\")\n        \n        if not found_sdks:\n            print(\"\u2717 No Claude SDK Python packages found\")\n    except Exception as e:\n        print(f\"Error checking Python packages: {e}\")\n    \n    # Check pip list for claude-related packages\n    stdout, stderr, code = run_command(\"pip list | grep -i claude\")\n    if stdout:\n        print(\"\\nInstalled pip packages with 'claude':\")\n        print(stdout)\n    \n    # Check npm for Node.js SDK\n    stdout, stderr, code = run_command(\"npm list -g --depth=0 | grep -i claude\")\n    if stdout:\n        print(\"\\nGlobal npm packages with 'claude':\")\n        print(stdout)\n\ndef check_environment():\n    \"\"\"Check environment variables related to Claude.\"\"\"\n    print_section(\"Environment Variables\")\n    \n    claude_env_vars = []\n    for key, value in os.environ.items():\n        if 'CLAUDE' in key.upper() or 'ANTHROPIC' in key.upper():\n            # Mask potential API keys\n            if 'KEY' in key.upper() or 'TOKEN' in key.upper() or 'SECRET' in key.upper():\n                masked_value = value[:4] + '...' + value[-4:] if len(value) > 8 else '***'\n                claude_env_vars.append(f\"{key}={masked_value}\")\n            else:\n                claude_env_vars.append(f\"{key}={value}\")\n    \n    if claude_env_vars:\n        print(\"Claude/Anthropic related environment variables:\")\n        for var in claude_env_vars:\n            print(f\"  {var}\")\n    else:\n        print(\"No Claude/Anthropic environment variables found\")\n\ndef check_processes():\n    \"\"\"Check for running Claude-related processes.\"\"\"\n    print_section(\"Running Processes\")\n    \n    # Check for claude processes\n    stdout, stderr, code = run_command(\"ps aux | grep -i claude | grep -v grep\")\n    if stdout:\n        print(\"Claude-related processes:\")\n        for line in stdout.split('\\n'):\n            if line.strip():\n                print(f\"  {line[:150]}...\")  # Truncate long lines\n    else:\n        print(\"No Claude-related processes found\")\n\ndef check_docker():\n    \"\"\"Check if running in Docker and for Claude-related containers.\"\"\"\n    print_section(\"Docker/Container Check\")\n    \n    # Check if we're in a container\n    if Path(\"/.dockerenv\").exists():\n        print(\"\u2713 Running inside a Docker container\")\n    elif Path(\"/run/.containerenv\").exists():\n        print(\"\u2713 Running inside a container (Podman/other)\")\n    else:\n        print(\"\u2717 Not running in a container (or container type not detected)\")\n    \n    # Check for Claude-related Docker images/containers\n    stdout, stderr, code = run_command(\"docker ps 2>/dev/null | grep -i claude\")\n    if code == 0 and stdout:\n        print(\"Claude-related Docker containers:\")\n        print(stdout)\n\ndef check_python_runtime():\n    \"\"\"Check Python runtime for Claude SDK usage.\"\"\"\n    print_section(\"Python Runtime Analysis\")\n    \n    # Check imported modules\n    imported_modules = [name for name in sys.modules.keys() if 'claude' in name.lower() or 'anthropic' in name.lower()]\n    if imported_modules:\n        print(\"Currently imported Claude/Anthropic modules:\")\n        for mod in imported_modules:\n            print(f\"  {mod}\")\n    else:\n        print(\"No Claude/Anthropic modules currently imported\")\n    \n    # Check sys.path for Claude-related directories\n    claude_paths = [p for p in sys.path if 'claude' in p.lower() or 'anthropic' in p.lower()]\n    if claude_paths:\n        print(\"\\nClaude-related paths in sys.path:\")\n        for path in claude_paths:\n            print(f\"  {path}\")\n\ndef check_network_connections():\n    \"\"\"Check for network connections to Anthropic endpoints.\"\"\"\n    print_section(\"Network Connections\")\n    \n    # Check for connections to Anthropic API\n    stdout, stderr, code = run_command(\"netstat -an 2>/dev/null | grep -E '(api.anthropic|claude.ai)' || ss -an 2>/dev/null | grep -E '(api.anthropic|claude.ai)'\")\n    if stdout:\n        print(\"Connections to Anthropic endpoints:\")\n        print(stdout)\n    else:\n        print(\"No active connections to Anthropic endpoints detected\")\n    \n    # Check DNS cache for Anthropic domains\n    stdout, stderr, code = run_command(\"getent hosts api.anthropic.com claude.ai 2>/dev/null\")\n    if stdout:\n        print(\"\\nDNS lookups for Anthropic domains:\")\n        print(stdout)\n\ndef check_file_system():\n    \"\"\"Check file system for Claude-related files.\"\"\"\n    print_section(\"File System Analysis\")\n    \n    # Common directories to check\n    dirs_to_check = [\n        Path.home() / \".claude\",\n        Path.home() / \".config\" / \"claude\",\n        Path(\"/opt/claude\"),\n        Path(\"/usr/local/claude\"),\n        Path(\"/tmp\"),\n    ]\n    \n    for dir_path in dirs_to_check:\n        if dir_path.exists():\n            try:\n                claude_files = list(dir_path.glob(\"*claude*\"))\n                if claude_files:\n                    print(f\"\\nClaude-related files in {dir_path}:\")\n                    for file in claude_files[:10]:  # Limit to 10 files\n                        print(f\"  {file}\")\n            except PermissionError:\n                print(f\"Permission denied accessing {dir_path}\")\n\ndef main():\n    \"\"\"Main execution function.\"\"\"\n    print(\"=\"*60)\n    print(\" Claude Code Setup Debugger\")\n    print(\" Detecting whether SDK or CLI is being used\")\n    print(\"=\"*60)\n    \n    # System info\n    print_section(\"System Information\")\n    print(f\"Python version: {sys.version}\")\n    print(f\"Platform: {sys.platform}\")\n    stdout, _, _ = run_command(\"uname -a\")\n    if stdout:\n        print(f\"System: {stdout}\")\n    \n    # Run all checks\n    check_claude_cli()\n    check_claude_sdk()\n    check_environment()\n    check_processes()\n    check_docker()\n    check_python_runtime()\n    check_network_connections()\n    check_file_system()\n    \n    # Summary\n    print_section(\"Summary\")\n    print(\"Review the above information to determine your Claude Code setup.\")\n    print(\"Key indicators:\")\n    print(\"- CLI: Look for 'claude' binary in PATH, config files in ~/.claude\")\n    print(\"- SDK: Look for Python/Node packages, imported modules\")\n    print(\"- Both setups may use ANTHROPIC_API_KEY environment variable\")\n    print(\"\\nFor e2b sandboxes specifically:\")\n    print(\"- Check if code is being executed via subprocess calls to 'claude' command\")\n    print(\"- Or if Python/Node SDK is being imported and used directly\")\n\nif __name__ == \"__main__\":\n    main()"
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 238,
+        "cache_read_input_tokens": 37260,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 238,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 2774,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoRbWSVAKL5Rv3B7GkCo",
+    "type": "assistant",
+    "uuid": "ce146399-6054-46a2-b305-7a860891d566",
+    "timestamp": "2025-09-04T13:18:07.186Z"
+  },
+  {
+    "parentUuid": "ce146399-6054-46a2-b305-7a860891d566",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:Write\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:07.733Z",
+    "uuid": "b55f8f62-95bf-4117-b280-970e65c47ac0",
+    "toolUseID": "toolu_017Y8oqBD2QCyQGc1o7wYAfb",
+    "level": "info"
+  },
+  {
+    "parentUuid": "b55f8f62-95bf-4117-b280-970e65c47ac0",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_017Y8oqBD2QCyQGc1o7wYAfb",
+          "type": "tool_result",
+          "content": "File created successfully at: /Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py"
+        }
+      ]
+    },
+    "uuid": "97234e6e-c2d0-4fce-b5be-cf2098392a6b",
+    "timestamp": "2025-09-04T13:18:07.800Z",
+    "toolUseResult": {
+      "type": "create",
+      "filePath": "/Users/stevengonsalvez/d/git/claude-debugger/claude-debugger.py",
+      "content": "#!/usr/bin/env python3\n\"\"\"\nClaude Code Setup Debugger\nThis script helps identify whether Claude Code SDK or CLI is being used in the environment.\n\"\"\"\n\nimport os\nimport sys\nimport subprocess\nimport json\nimport shutil\nfrom pathlib import Path\nimport importlib.util\n\ndef run_command(cmd):\n    \"\"\"Run a shell command and return output.\"\"\"\n    try:\n        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)\n        return result.stdout.strip(), result.stderr.strip(), result.returncode\n    except subprocess.TimeoutExpired:\n        return \"\", \"Command timed out\", 1\n    except Exception as e:\n        return \"\", str(e), 1\n\ndef print_section(title):\n    \"\"\"Print a formatted section header.\"\"\"\n    print(f\"\\n{'='*60}\")\n    print(f\" {title}\")\n    print('='*60)\n\ndef check_claude_cli():\n    \"\"\"Check for Claude Code CLI installation and configuration.\"\"\"\n    print_section(\"Claude Code CLI Check\")\n    \n    # Check if claude command exists\n    claude_path = shutil.which(\"claude\")\n    if claude_path:\n        print(f\"\u2713 Claude CLI found at: {claude_path}\")\n        \n        # Get version\n        stdout, stderr, code = run_command(\"claude --version\")\n        if code == 0:\n            print(f\"  Version: {stdout}\")\n        \n        # Check for config files\n        config_paths = [\n            Path.home() / \".claude\" / \"config.json\",\n            Path.home() / \".config\" / \"claude\" / \"config.json\",\n            Path(\"/etc/claude/config.json\"),\n        ]\n        \n        for config_path in config_paths:\n            if config_path.exists():\n                print(f\"  Config found: {config_path}\")\n                try:\n                    with open(config_path, 'r') as f:\n                        config = json.load(f)\n                        # Don't print sensitive info, just structure\n                        print(f\"    Config keys: {list(config.keys())}\")\n                except Exception as e:\n                    print(f\"    Could not read config: {e}\")\n    else:\n        print(\"\u2717 Claude CLI not found in PATH\")\n    \n    # Check for common CLI installation directories\n    cli_dirs = [\n        \"/usr/local/bin/claude\",\n        \"/usr/bin/claude\",\n        \"/opt/claude/bin/claude\",\n        Path.home() / \".local\" / \"bin\" / \"claude\",\n    ]\n    \n    for cli_dir in cli_dirs:\n        if Path(cli_dir).exists():\n            print(f\"  Found CLI binary at: {cli_dir}\")\n\ndef check_claude_sdk():\n    \"\"\"Check for Claude Code SDK installation.\"\"\"\n    print_section(\"Claude Code SDK Check\")\n    \n    # Check for Python SDK\n    try:\n        # Try to import claude_code or similar packages\n        sdk_packages = [\n            \"claude_code\",\n            \"claude_sdk\",\n            \"anthropic_claude\",\n            \"anthropic\",\n            \"claudecode\",\n        ]\n        \n        found_sdks = []\n        for package in sdk_packages:\n            spec = importlib.util.find_spec(package)\n            if spec:\n                found_sdks.append(package)\n                print(f\"\u2713 Python package '{package}' found\")\n                \n                # Try to get version\n                try:\n                    module = __import__(package)\n                    if hasattr(module, '__version__'):\n                        print(f\"  Version: {module.__version__}\")\n                    print(f\"  Location: {spec.origin}\")\n                except Exception as e:\n                    print(f\"  Could not load module: {e}\")\n        \n        if not found_sdks:\n            print(\"\u2717 No Claude SDK Python packages found\")\n    except Exception as e:\n        print(f\"Error checking Python packages: {e}\")\n    \n    # Check pip list for claude-related packages\n    stdout, stderr, code = run_command(\"pip list | grep -i claude\")\n    if stdout:\n        print(\"\\nInstalled pip packages with 'claude':\")\n        print(stdout)\n    \n    # Check npm for Node.js SDK\n    stdout, stderr, code = run_command(\"npm list -g --depth=0 | grep -i claude\")\n    if stdout:\n        print(\"\\nGlobal npm packages with 'claude':\")\n        print(stdout)\n\ndef check_environment():\n    \"\"\"Check environment variables related to Claude.\"\"\"\n    print_section(\"Environment Variables\")\n    \n    claude_env_vars = []\n    for key, value in os.environ.items():\n        if 'CLAUDE' in key.upper() or 'ANTHROPIC' in key.upper():\n            # Mask potential API keys\n            if 'KEY' in key.upper() or 'TOKEN' in key.upper() or 'SECRET' in key.upper():\n                masked_value = value[:4] + '...' + value[-4:] if len(value) > 8 else '***'\n                claude_env_vars.append(f\"{key}={masked_value}\")\n            else:\n                claude_env_vars.append(f\"{key}={value}\")\n    \n    if claude_env_vars:\n        print(\"Claude/Anthropic related environment variables:\")\n        for var in claude_env_vars:\n            print(f\"  {var}\")\n    else:\n        print(\"No Claude/Anthropic environment variables found\")\n\ndef check_processes():\n    \"\"\"Check for running Claude-related processes.\"\"\"\n    print_section(\"Running Processes\")\n    \n    # Check for claude processes\n    stdout, stderr, code = run_command(\"ps aux | grep -i claude | grep -v grep\")\n    if stdout:\n        print(\"Claude-related processes:\")\n        for line in stdout.split('\\n'):\n            if line.strip():\n                print(f\"  {line[:150]}...\")  # Truncate long lines\n    else:\n        print(\"No Claude-related processes found\")\n\ndef check_docker():\n    \"\"\"Check if running in Docker and for Claude-related containers.\"\"\"\n    print_section(\"Docker/Container Check\")\n    \n    # Check if we're in a container\n    if Path(\"/.dockerenv\").exists():\n        print(\"\u2713 Running inside a Docker container\")\n    elif Path(\"/run/.containerenv\").exists():\n        print(\"\u2713 Running inside a container (Podman/other)\")\n    else:\n        print(\"\u2717 Not running in a container (or container type not detected)\")\n    \n    # Check for Claude-related Docker images/containers\n    stdout, stderr, code = run_command(\"docker ps 2>/dev/null | grep -i claude\")\n    if code == 0 and stdout:\n        print(\"Claude-related Docker containers:\")\n        print(stdout)\n\ndef check_python_runtime():\n    \"\"\"Check Python runtime for Claude SDK usage.\"\"\"\n    print_section(\"Python Runtime Analysis\")\n    \n    # Check imported modules\n    imported_modules = [name for name in sys.modules.keys() if 'claude' in name.lower() or 'anthropic' in name.lower()]\n    if imported_modules:\n        print(\"Currently imported Claude/Anthropic modules:\")\n        for mod in imported_modules:\n            print(f\"  {mod}\")\n    else:\n        print(\"No Claude/Anthropic modules currently imported\")\n    \n    # Check sys.path for Claude-related directories\n    claude_paths = [p for p in sys.path if 'claude' in p.lower() or 'anthropic' in p.lower()]\n    if claude_paths:\n        print(\"\\nClaude-related paths in sys.path:\")\n        for path in claude_paths:\n            print(f\"  {path}\")\n\ndef check_network_connections():\n    \"\"\"Check for network connections to Anthropic endpoints.\"\"\"\n    print_section(\"Network Connections\")\n    \n    # Check for connections to Anthropic API\n    stdout, stderr, code = run_command(\"netstat -an 2>/dev/null | grep -E '(api.anthropic|claude.ai)' || ss -an 2>/dev/null | grep -E '(api.anthropic|claude.ai)'\")\n    if stdout:\n        print(\"Connections to Anthropic endpoints:\")\n        print(stdout)\n    else:\n        print(\"No active connections to Anthropic endpoints detected\")\n    \n    # Check DNS cache for Anthropic domains\n    stdout, stderr, code = run_command(\"getent hosts api.anthropic.com claude.ai 2>/dev/null\")\n    if stdout:\n        print(\"\\nDNS lookups for Anthropic domains:\")\n        print(stdout)\n\ndef check_file_system():\n    \"\"\"Check file system for Claude-related files.\"\"\"\n    print_section(\"File System Analysis\")\n    \n    # Common directories to check\n    dirs_to_check = [\n        Path.home() / \".claude\",\n        Path.home() / \".config\" / \"claude\",\n        Path(\"/opt/claude\"),\n        Path(\"/usr/local/claude\"),\n        Path(\"/tmp\"),\n    ]\n    \n    for dir_path in dirs_to_check:\n        if dir_path.exists():\n            try:\n                claude_files = list(dir_path.glob(\"*claude*\"))\n                if claude_files:\n                    print(f\"\\nClaude-related files in {dir_path}:\")\n                    for file in claude_files[:10]:  # Limit to 10 files\n                        print(f\"  {file}\")\n            except PermissionError:\n                print(f\"Permission denied accessing {dir_path}\")\n\ndef main():\n    \"\"\"Main execution function.\"\"\"\n    print(\"=\"*60)\n    print(\" Claude Code Setup Debugger\")\n    print(\" Detecting whether SDK or CLI is being used\")\n    print(\"=\"*60)\n    \n    # System info\n    print_section(\"System Information\")\n    print(f\"Python version: {sys.version}\")\n    print(f\"Platform: {sys.platform}\")\n    stdout, _, _ = run_command(\"uname -a\")\n    if stdout:\n        print(f\"System: {stdout}\")\n    \n    # Run all checks\n    check_claude_cli()\n    check_claude_sdk()\n    check_environment()\n    check_processes()\n    check_docker()\n    check_python_runtime()\n    check_network_connections()\n    check_file_system()\n    \n    # Summary\n    print_section(\"Summary\")\n    print(\"Review the above information to determine your Claude Code setup.\")\n    print(\"Key indicators:\")\n    print(\"- CLI: Look for 'claude' binary in PATH, config files in ~/.claude\")\n    print(\"- SDK: Look for Python/Node packages, imported modules\")\n    print(\"- Both setups may use ANTHROPIC_API_KEY environment variable\")\n    print(\"\\nFor e2b sandboxes specifically:\")\n    print(\"- Check if code is being executed via subprocess calls to 'claude' command\")\n    print(\"- Or if Python/Node SDK is being imported and used directly\")\n\nif __name__ == \"__main__\":\n    main()",
+      "structuredPatch": []
+    }
+  },
+  {
+    "parentUuid": "97234e6e-c2d0-4fce-b5be-cf2098392a6b",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:Write\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:07.821Z",
+    "uuid": "2e6d1371-0ca7-4f42-b068-74891fa96f62",
+    "toolUseID": "toolu_017Y8oqBD2QCyQGc1o7wYAfb",
+    "level": "info"
+  },
+  {
+    "parentUuid": "2e6d1371-0ca7-4f42-b068-74891fa96f62",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:Write\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:08.020Z",
+    "uuid": "ea921516-b5aa-4773-a58d-f3b156bb36e8",
+    "toolUseID": "toolu_017Y8oqBD2QCyQGc1o7wYAfb",
+    "level": "info"
+  },
+  {
+    "parentUuid": "ea921516-b5aa-4773-a58d-f3b156bb36e8",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_014p45agkmhLxTQi8CwDzNEy",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01VXRVGLAJbFi9P5eLoAvbGa",
+          "name": "Bash",
+          "input": {
+            "command": "chmod +x claude-debugger.py",
+            "description": "Make script executable"
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 6,
+        "cache_creation_input_tokens": 2815,
+        "cache_read_input_tokens": 37498,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 2815,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 25,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoRfEzfTJkojyZpEZcrV",
+    "type": "assistant",
+    "uuid": "75c8122f-8a80-4661-a2e5-4867bc682f3c",
+    "timestamp": "2025-09-04T13:18:12.279Z"
+  },
+  {
+    "parentUuid": "75c8122f-8a80-4661-a2e5-4867bc682f3c",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:12.692Z",
+    "uuid": "894c888e-497f-402a-82ba-295c4d464976",
+    "toolUseID": "toolu_01VXRVGLAJbFi9P5eLoAvbGa",
+    "level": "info"
+  },
+  {
+    "parentUuid": "894c888e-497f-402a-82ba-295c4d464976",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01VXRVGLAJbFi9P5eLoAvbGa",
+          "type": "tool_result",
+          "content": "",
+          "is_error": false
+        }
+      ]
+    },
+    "uuid": "c35e9b67-3660-4a36-8d7a-320033b676c0",
+    "timestamp": "2025-09-04T13:18:12.890Z",
+    "toolUseResult": {
+      "stdout": "",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  },
+  {
+    "parentUuid": "c35e9b67-3660-4a36-8d7a-320033b676c0",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:Bash\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:12.957Z",
+    "uuid": "b2109423-6f6a-4377-9b4f-035569ad3216",
+    "toolUseID": "toolu_01VXRVGLAJbFi9P5eLoAvbGa",
+    "level": "info"
+  },
+  {
+    "parentUuid": "b2109423-6f6a-4377-9b4f-035569ad3216",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:13.306Z",
+    "uuid": "cb501756-294c-4c0f-a1ae-4f107c5fa186",
+    "toolUseID": "toolu_01VXRVGLAJbFi9P5eLoAvbGa",
+    "level": "info"
+  },
+  {
+    "parentUuid": "cb501756-294c-4c0f-a1ae-4f107c5fa186",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01AewAc1xLPhdKqCwK2JAWrZ",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01TAsk9H7RC8csyT4GcqUDEY",
+          "name": "TodoWrite",
+          "input": {
+            "todos": [
+              {
+                "content": "Create claude-debugger.py script in repository",
+                "activeForm": "Creating claude-debugger.py script",
+                "status": "completed"
+              }
+            ]
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 7,
+        "cache_creation_input_tokens": 104,
+        "cache_read_input_tokens": 40313,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 104,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 88,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoRfdWFD4Bzz61LrGLfu",
+    "type": "assistant",
+    "uuid": "c7b0a8c7-0025-4688-b723-798061ad7253",
+    "timestamp": "2025-09-04T13:18:17.461Z"
+  },
+  {
+    "parentUuid": "c7b0a8c7-0025-4688-b723-798061ad7253",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:17.698Z",
+    "uuid": "d4890e26-873c-42dc-b9a2-0dcdf4fa2088",
+    "toolUseID": "toolu_01TAsk9H7RC8csyT4GcqUDEY",
+    "level": "info"
+  },
+  {
+    "parentUuid": "d4890e26-873c-42dc-b9a2-0dcdf4fa2088",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01TAsk9H7RC8csyT4GcqUDEY",
+          "type": "tool_result",
+          "content": "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable"
+        }
+      ]
+    },
+    "uuid": "14c75915-4e89-4c98-8050-6023ed6d2444",
+    "timestamp": "2025-09-04T13:18:17.709Z",
+    "toolUseResult": {
+      "oldTodos": [],
+      "newTodos": [
+        {
+          "content": "Create claude-debugger.py script in repository",
+          "status": "completed",
+          "activeForm": "Creating claude-debugger.py script"
+        }
+      ]
+    }
+  },
+  {
+    "parentUuid": "14c75915-4e89-4c98-8050-6023ed6d2444",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:TodoWrite\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:17.725Z",
+    "uuid": "d555ebd2-d726-4ecd-8dbc-240bb6477e1a",
+    "toolUseID": "toolu_01TAsk9H7RC8csyT4GcqUDEY",
+    "level": "info"
+  },
+  {
+    "parentUuid": "d555ebd2-d726-4ecd-8dbc-240bb6477e1a",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:17.922Z",
+    "uuid": "3f62e05f-58a0-4190-b2dd-6053b8a4bc35",
+    "toolUseID": "toolu_01TAsk9H7RC8csyT4GcqUDEY",
+    "level": "info"
+  },
+  {
+    "parentUuid": "3f62e05f-58a0-4190-b2dd-6053b8a4bc35",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01QzQmUKW25H6sEzQ7SEysry",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "Done! I've created the `claude-debugger.py` script in your repository. The script is now executable and ready to use. \n\nYou can run it with:\n```bash\npython3 claude-debugger.py\n```\n\nThis debugger will help identify whether Claude Code is using SDK or CLI by checking for:\n- Claude CLI binary and config files\n- Python/Node SDK packages\n- Environment variables\n- Running processes\n- Docker containers\n- Network connections to Anthropic endpoints\n- File system artifacts"
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 5,
+        "cache_creation_input_tokens": 212,
+        "cache_read_input_tokens": 40417,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 212,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 115,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoRfyW2N1HEnhzXQJLe6",
+    "type": "assistant",
+    "uuid": "048c638c-acc3-4800-ab3c-222f1879dd17",
+    "timestamp": "2025-09-04T13:18:23.244Z"
+  },
+  {
+    "parentUuid": "048c638c-acc3-4800-ab3c-222f1879dd17",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mStop\u001b[22m [uv run ~/.claude/hooks/stop.py --chat] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T13:18:24.437Z",
+    "uuid": "bf993bf3-4b67-4a48-a2fa-46b6a929fffa",
+    "toolUseID": "37d65651-2b7f-4904-85ff-3d269bf8b878",
+    "level": "info"
+  },
+  {
+    "parentUuid": "bf993bf3-4b67-4a48-a2fa-46b6a929fffa",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": "can you run the script and let me know the output"
+    },
+    "uuid": "066f42ca-0b1d-4fac-9aa5-9c1f967e5304",
+    "timestamp": "2025-09-04T15:08:09.033Z"
+  },
+  {
+    "parentUuid": "066f42ca-0b1d-4fac-9aa5-9c1f967e5304",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_0116KfC9SuXqSSgG5Z82Miv5",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll run the claude-debugger script to see what Claude Code setup is being used in this environment."
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 40761,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 40761,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 4,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoa3uyjjpigAfBuDQKgF",
+    "type": "assistant",
+    "uuid": "c5a4608a-ad39-4751-8556-5e9291b0f596",
+    "timestamp": "2025-09-04T15:08:37.293Z"
+  },
+  {
+    "parentUuid": "c5a4608a-ad39-4751-8556-5e9291b0f596",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_0116KfC9SuXqSSgG5Z82Miv5",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01E5AQhDN3RednAvpFME72JT",
+          "name": "Bash",
+          "input": {
+            "command": "python3 claude-debugger.py",
+            "description": "Run the Claude debugger script"
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 40761,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 40761,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 4,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoa3uyjjpigAfBuDQKgF",
+    "type": "assistant",
+    "uuid": "98280f66-1a8c-408d-97f1-2f958bb915d0",
+    "timestamp": "2025-09-04T15:08:38.311Z"
+  },
+  {
+    "parentUuid": "98280f66-1a8c-408d-97f1-2f958bb915d0",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:08:38.616Z",
+    "uuid": "5178b39f-3e8c-45eb-846c-207ca2232c2b",
+    "toolUseID": "toolu_01E5AQhDN3RednAvpFME72JT",
+    "level": "info"
+  },
+  {
+    "parentUuid": "5178b39f-3e8c-45eb-846c-207ca2232c2b",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01E5AQhDN3RednAvpFME72JT",
+          "type": "tool_result",
+          "content": "============================================================\n Claude Code Setup Debugger\n Detecting whether SDK or CLI is being used\n============================================================\n\n============================================================\n System Information\n============================================================\nPython version: 3.12.5 (main, Jan 19 2025, 22:14:39) [Clang 14.0.3 (clang-1403.0.22.14.1)]\nPlatform: darwin\nSystem: Darwin MB1412.local 24.2.0 Darwin Kernel Version 24.2.0: Fri Dec  6 19:01:59 PST 2024; root:xnu-11215.61.5~2/RELEASE_ARM64_T6000 arm64\n\n============================================================\n Claude Code CLI Check\n============================================================\n\u2713 Claude CLI found at: /Users/stevengonsalvez/.nvm/versions/node/v22.13.0/bin/claude\n  Version: 1.0.103 (Claude Code)\n\n============================================================\n Claude Code SDK Check\n============================================================\n\u2713 Python package 'anthropic' found\n  Version: 0.55.0\n  Location: /Users/stevengonsalvez/.pyenv/versions/3.12.5/lib/python3.12/site-packages/anthropic/__init__.py\n\nInstalled pip packages with 'claude':\nclaudesync                               0.7.0\n\nGlobal npm packages with 'claude':\n\u251c\u2500\u2500 @anthropic-ai/claude-code@1.0.103\n\n============================================================\n Environment Variables\n============================================================\nClaude/Anthropic related environment variables:\n  CLAUDECODE=1\n  CLAUDE_CODE_ENTRYPOINT=cli\n\n============================================================\n Running Processes\n============================================================\nClaude-related processes:\n  stevengonsalvez  63041  13.1  1.7 445721296 580928 s011  Rs+  Wed08am  96:46.52 claude   ...\n  stevengonsalvez   8967  10.2  0.8 444559040 257712 s019  S+    2:16pm   0:19.54 claude  ...\n  stevengonsalvez  62943   1.6  0.2 412962768  56944 s007  S+   Wed08am  16:52.37 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  18251   1.0  0.1 411400240  23088 s012  S+    4:07pm   0:01.69 target/debug/claude-box...\n  stevengonsalvez  59774   0.3  0.1 412994752  32000 s009  S+   Wed08am  17:47.85 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  57057   0.2  0.1 412930000  29936 s015  S+   Wed08am  13:01.28 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  26576   0.1  0.2 411704176  53040   ??  S     4:08pm   0:00.38 /Users/stevengonsalvez/.pyenv/versions/3.12.5/bin/python3 claude-debug...\n  stevengonsalvez   6160   0.0  0.0 444038432  15072   ??  S     1:05pm   0:00.93 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Content...\n  stevengonsalvez  96887   0.0  0.0 410745232    736   ??  S<    3:20am   0:00.03 /Applications/Claude.app/Contents/Frameworks/Squirrel.framework/Resour...\n  stevengonsalvez  94772   0.0  0.1 1865507248  18592   ??  S     3:19am   0:01.09 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94641   0.0  0.1 1865314624  22320   ??  S     3:19am   0:01.64 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94381   0.0  0.2 1875802160  58640   ??  S     3:19am   4:57.42 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94357   0.0  0.0 1865302880   6624   ??  S     3:19am   0:00.71 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94355   0.0  0.1 1865319584  21376   ??  S     3:19am   0:00.90 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94278   0.0  0.1 444088688  28752   ??  S     3:19am   0:07.48 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Content...\n  stevengonsalvez  94276   0.0  0.1 444253952  31152   ??  S     3:19am   3:57.26 /Applications/Claude.app/Contents/Frameworks/Claude Helper (GPU).app/C...\n  stevengonsalvez  94270   0.0  0.0 443729280   1168   ??  S     3:19am   0:00.06 /Applications/Claude.app/Contents/Frameworks/Electron Framework.framew...\n  stevengonsalvez  94222   0.0  0.2 1865850416  69600   ??  S     3:19am   0:52.38 /Applications/Claude.app/Contents/MacOS/Claude...\n  stevengonsalvez  95126   0.0  1.7 412354656 574320 s000  S+   10:10pm 138:53.19 /Users/stevengonsalvez/.local/share/uv/tools/claude-monitor/bin/python...\n  stevengonsalvez  62933   0.0  0.0 410733856    336 s007  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  59880   0.0  0.1 444445904  26144 s017  Ss+  Wed08am  51:27.96 claude   ...\n  stevengonsalvez  59763   0.0  0.0 410743072    336 s009  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  57218   0.0  0.1 444291776  21552 s006  Ss+  Wed08am  15:20.56 claude   ...\n  stevengonsalvez  57046   0.0  0.0 410743072    336 s015  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  13951   0.0  0.0 443708800    816   ??  S    Mon03am   0:00.37 /Applications/Claude.app/Contents/Frameworks/Electron Framework.framew...\n  stevengonsalvez  35845   0.0  0.1 444684480  21600 s008  S+   Thu11pm 221:13.94 claude  ...\n  stevengonsalvez  26557   0.0  0.0 410779232   4560   ??  Ss    4:08pm   0:00.02 /bin/zsh -c -l source /Users/stevengonsalvez/.claude/shell-snapshots/s...\n\n============================================================\n Docker/Container Check\n============================================================\n\u2717 Not running in a container (or container type not detected)\n\n============================================================\n Python Runtime Analysis\n============================================================\nCurrently imported Claude/Anthropic modules:\n  anthropic.types.model\n  anthropic._types\n  anthropic._utils._sync\n  anthropic._utils._proxy\n  anthropic._compat\n  anthropic._utils._utils\n  anthropic._utils._typing\n  anthropic._utils._streams\n  anthropic._files\n  anthropic._utils._transform\n  anthropic._utils._reflection\n  anthropic._utils\n  anthropic._constants\n  anthropic._models\n  anthropic.types.server_tool_usage\n  anthropic.types.usage\n  anthropic.types.shared.billing_error\n  anthropic.types.shared.not_found_error\n  anthropic.types.shared.api_error_object\n  anthropic.types.shared.overloaded_error\n  anthropic.types.shared.permission_error\n  anthropic.types.shared.rate_limit_error\n  anthropic.types.shared.authentication_error\n  anthropic.types.shared.gateway_timeout_error\n  anthropic.types.shared.invalid_request_error\n  anthropic.types.shared.error_object\n  anthropic.types.shared.error_response\n  anthropic.types.shared\n  anthropic.types.stop_reason\n  anthropic.types.citation_char_location\n  anthropic.types.citation_page_location\n  anthropic.types.citation_content_block_location\n  anthropic.types.citations_web_search_result_location\n  anthropic.types.text_citation\n  anthropic.types.text_block\n  anthropic.types.thinking_block\n  anthropic.types.tool_use_block\n  anthropic.types.server_tool_use_block\n  anthropic.types.redacted_thinking_block\n  anthropic.types.web_search_result_block\n  anthropic.types.web_search_tool_result_error\n  anthropic.types.web_search_tool_result_block_content\n  anthropic.types.web_search_tool_result_block\n  anthropic.types.content_block\n  anthropic.types.message\n  anthropic.types.beta_api_error\n  anthropic.types.beta_billing_error\n  anthropic.types.beta_not_found_error\n  anthropic.types.beta_overloaded_error\n  anthropic.types.beta_permission_error\n  anthropic.types.beta_rate_limit_error\n  anthropic.types.beta_authentication_error\n  anthropic.types.beta_gateway_timeout_error\n  anthropic.types.beta_invalid_request_error\n  anthropic.types.beta_error\n  anthropic.types.completion\n  anthropic.types.model_info\n  anthropic.types.text_delta\n  anthropic.types.cache_control_ephemeral_param\n  anthropic.types.tool_param\n  anthropic.types.model_param\n  anthropic.types.citation_char_location_param\n  anthropic.types.citation_page_location_param\n  anthropic.types.citation_content_block_location_param\n  anthropic.types.citation_web_search_result_location_param\n  anthropic.types.text_citation_param\n  anthropic.types.text_block_param\n  anthropic.types.url_image_source_param\n  anthropic.types.base64_image_source_param\n  anthropic.types.image_block_param\n  anthropic.types.url_pdf_source_param\n  anthropic.types.citations_config_param\n  anthropic.types.base64_pdf_source_param\n  anthropic.types.plain_text_source_param\n  anthropic.types.content_block_source_content_param\n  anthropic.types.content_block_source_param\n  anthropic.types.document_block_param\n  anthropic.types.thinking_block_param\n  anthropic.types.tool_use_block_param\n  anthropic.types.tool_result_block_param\n  anthropic.types.server_tool_use_block_param\n  anthropic.types.redacted_thinking_block_param\n  anthropic.types.web_search_result_block_param\n  anthropic.types.web_search_tool_request_error_param\n  anthropic.types.web_search_tool_result_block_param_content_param\n  anthropic.types.web_search_tool_result_block_param\n  anthropic.types.message_param\n  anthropic.types.metadata_param\n  anthropic.types.thinking_delta\n  anthropic.types.citations_delta\n  anthropic.types.signature_delta\n  anthropic.types.input_json_delta\n  anthropic.types.tool_bash_20250124_param\n  anthropic.types.web_search_tool_20250305_param\n  anthropic.types.tool_text_editor_20250124_param\n  anthropic.types.tool_union_param\n  anthropic.types.anthropic_beta_param\n  anthropic.types.model_list_params\n  anthropic.types.tool_choice_any_param\n  anthropic.types.tool_choice_auto_param\n  anthropic.types.tool_choice_none_param\n  anthropic.types.tool_choice_tool_param\n  anthropic.types.tool_choice_param\n  anthropic.types.raw_message_stop_event\n  anthropic.types.message_stop_event\n  anthropic.types.beta_error_response\n  anthropic.types.content_block_param\n  anthropic.types.message_delta_usage\n  anthropic.types.raw_message_delta_event\n  anthropic.types.message_delta_event\n  anthropic.types.raw_message_start_event\n  anthropic.types.message_start_event\n  anthropic.types.raw_content_block_stop_event\n  anthropic.types.raw_content_block_delta\n  anthropic.types.raw_content_block_delta_event\n  anthropic.types.raw_content_block_start_event\n  anthropic.types.raw_message_stream_event\n  anthropic.types.message_stream_event\n  anthropic.types.message_tokens_count\n  anthropic.types.thinking_config_enabled_param\n  anthropic.types.thinking_config_disabled_param\n  anthropic.types.thinking_config_param\n  anthropic.types.message_create_params\n  anthropic.types.completion_create_params\n  anthropic.types.content_block_stop_event\n  anthropic.types.content_block_delta_event\n  anthropic.types.content_block_start_event\n  anthropic.types.message_count_tokens_tool_param\n  anthropic.types.message_count_tokens_params\n  anthropic.types\n  anthropic._exceptions\n  anthropic._qs\n  anthropic._version\n  anthropic._streaming\n  anthropic._decoders\n  anthropic._decoders.jsonl\n  anthropic._response\n  anthropic._utils._httpx\n  anthropic._legacy_response\n  anthropic._base_client\n  anthropic._client\n  anthropic._utils._logs\n  anthropic._utils._resources_proxy\n  anthropic.lib\n  anthropic.lib._extras._common\n  anthropic.lib._extras._google_auth\n  anthropic.lib._extras\n  anthropic.lib.vertex._auth\n  anthropic._resource\n  anthropic.pagination\n  anthropic.types.beta.beta_cache_creation\n  anthropic.types.beta.beta_server_tool_usage\n  anthropic.types.beta.beta_usage\n  anthropic.types.beta.beta_container\n  anthropic.types.beta.beta_stop_reason\n  anthropic.types.beta.beta_citation_char_location\n  anthropic.types.beta.beta_citation_page_location\n  anthropic.types.beta.beta_citation_content_block_location\n  anthropic.types.beta.beta_citations_web_search_result_location\n  anthropic.types.beta.beta_text_citation\n  anthropic.types.beta.beta_text_block\n  anthropic.types.beta.beta_thinking_block\n  anthropic.types.beta.beta_tool_use_block\n  anthropic.types.beta.beta_mcp_tool_use_block\n  anthropic.types.beta.beta_mcp_tool_result_block\n  anthropic.types.beta.beta_server_tool_use_block\n  anthropic.types.beta.beta_container_upload_block\n  anthropic.types.beta.beta_redacted_thinking_block\n  anthropic.types.beta.beta_web_search_result_block\n  anthropic.types.beta.beta_web_search_tool_result_error_code\n  anthropic.types.beta.beta_web_search_tool_result_error\n  anthropic.types.beta.beta_web_search_tool_result_block_content\n  anthropic.types.beta.beta_web_search_tool_result_block\n  anthropic.types.beta.beta_code_execution_output_block\n  anthropic.types.beta.beta_code_execution_result_block\n  anthropic.types.beta.beta_code_execution_tool_result_error_code\n  anthropic.types.beta.beta_code_execution_tool_result_error\n  anthropic.types.beta.beta_code_execution_tool_result_block_content\n  anthropic.types.beta.beta_code_execution_tool_result_block\n  anthropic.types.beta.beta_content_block\n  anthropic.types.beta.beta_message\n  anthropic.types.beta.deleted_file\n  anthropic.types.beta.file_metadata\n  anthropic.types.beta.beta_model_info\n  anthropic.types.beta.beta_text_delta\n  anthropic.types.beta.beta_cache_control_ephemeral_param\n  anthropic.types.beta.beta_tool_param\n  anthropic.types.beta.file_list_params\n  anthropic.types.beta.model_list_params\n  anthropic.types.beta.beta_citation_char_location_param\n  anthropic.types.beta.beta_citation_page_location_param\n  anthropic.types.beta.beta_citation_content_block_location_param\n  anthropic.types.beta.beta_citation_web_search_result_location_param\n  anthropic.types.beta.beta_text_citation_param\n  anthropic.types.beta.beta_text_block_param\n  anthropic.types.beta.beta_url_image_source_param\n  anthropic.types.beta.beta_file_image_source_param\n  anthropic.types.beta.beta_base64_image_source_param\n  anthropic.types.beta.beta_image_block_param\n  anthropic.types.beta.beta_thinking_block_param\n  anthropic.types.beta.beta_tool_use_block_param\n  anthropic.types.beta.beta_tool_result_block_param\n  anthropic.types.beta.beta_mcp_tool_use_block_param\n  anthropic.types.beta.beta_server_tool_use_block_param\n  anthropic.types.beta.beta_container_upload_block_param\n  anthropic.types.beta.beta_url_pdf_source_param\n  anthropic.types.beta.beta_citations_config_param\n  anthropic.types.beta.beta_base64_pdf_source_param\n  anthropic.types.beta.beta_plain_text_source_param\n  anthropic.types.beta.beta_content_block_source_content_param\n  anthropic.types.beta.beta_content_block_source_param\n  anthropic.types.beta.beta_file_document_source_param\n  anthropic.types.beta.beta_request_document_block_param\n  anthropic.types.beta.beta_redacted_thinking_block_param\n  anthropic.types.beta.beta_web_search_result_block_param\n  anthropic.types.beta.beta_web_search_tool_request_error_param\n  anthropic.types.beta.beta_web_search_tool_result_block_param_content_param\n  anthropic.types.beta.beta_web_search_tool_result_block_param\n  anthropic.types.beta.beta_request_mcp_tool_result_block_param\n  anthropic.types.beta.beta_code_execution_output_block_param\n  anthropic.types.beta.beta_code_execution_result_block_param\n  anthropic.types.beta.beta_code_execution_tool_result_error_param\n  anthropic.types.beta.beta_code_execution_tool_result_block_param_content_param\n  anthropic.types.beta.beta_code_execution_tool_result_block_param\n  anthropic.types.beta.beta_content_block_param\n  anthropic.types.beta.beta_message_param\n  anthropic.types.beta.file_upload_params\n  anthropic.types.beta.beta_metadata_param\n  anthropic.types.beta.beta_thinking_delta\n  anthropic.types.beta.beta_citations_delta\n  anthropic.types.beta.beta_signature_delta\n  anthropic.types.beta.beta_input_json_delta\n  anthropic.types.beta.beta_tool_bash_20241022_param\n  anthropic.types.beta.beta_tool_bash_20250124_param\n  anthropic.types.beta.beta_web_search_tool_20250305_param\n  anthropic.types.beta.beta_tool_text_editor_20241022_param\n  anthropic.types.beta.beta_tool_text_editor_20250124_param\n  anthropic.types.beta.beta_tool_text_editor_20250429_param\n  anthropic.types.beta.beta_tool_computer_use_20241022_param\n  anthropic.types.beta.beta_tool_computer_use_20250124_param\n  anthropic.types.beta.beta_code_execution_tool_20250522_param\n  anthropic.types.beta.beta_tool_union_param\n  anthropic.types.beta.beta_tool_choice_any_param\n  anthropic.types.beta.beta_tool_choice_auto_param\n  anthropic.types.beta.beta_tool_choice_none_param\n  anthropic.types.beta.beta_tool_choice_tool_param\n  anthropic.types.beta.beta_tool_choice_param\n  anthropic.types.beta.beta_thinking_config_enabled_param\n  anthropic.types.beta.beta_thinking_config_disabled_param\n  anthropic.types.beta.beta_thinking_config_param\n  anthropic.types.beta.beta_request_mcp_server_tool_configuration_param\n  anthropic.types.beta.beta_request_mcp_server_url_definition_param\n  anthropic.types.beta.message_create_params\n  anthropic.types.beta.beta_message_delta_usage\n  anthropic.types.beta.beta_message_tokens_count\n  anthropic.types.beta.beta_base64_pdf_block_param\n  anthropic.types.beta.beta_raw_message_stop_event\n  anthropic.types.beta.message_count_tokens_params\n  anthropic.types.beta.beta_raw_content_block_delta\n  anthropic.types.beta.beta_raw_message_delta_event\n  anthropic.types.beta.beta_raw_message_start_event\n  anthropic.types.beta.beta_raw_content_block_stop_event\n  anthropic.types.beta.beta_raw_content_block_delta_event\n  anthropic.types.beta.beta_raw_content_block_start_event\n  anthropic.types.beta.beta_raw_message_stream_event\n  anthropic.types.beta\n  anthropic.resources.beta.files\n  anthropic.resources.beta.models\n  anthropic.types.beta.messages.batch_list_params\n  anthropic.types.beta.messages.beta_message_batch_request_counts\n  anthropic.types.beta.messages.beta_message_batch\n  anthropic.types.beta.messages.batch_create_params\n  anthropic.types.beta.messages.beta_message_batch_errored_result\n  anthropic.types.beta.messages.beta_message_batch_expired_result\n  anthropic.types.beta.messages.beta_message_batch_canceled_result\n  anthropic.types.beta.messages.beta_message_batch_succeeded_result\n  anthropic.types.beta.messages.beta_message_batch_result\n  anthropic.types.beta.messages.beta_deleted_message_batch\n  anthropic.types.beta.messages.beta_message_batch_individual_response\n  anthropic.types.beta.messages\n  anthropic.resources.beta.messages.batches\n  anthropic.lib.streaming._types\n  anthropic.lib.streaming._messages\n  anthropic.lib.streaming._beta_types\n  anthropic.lib.streaming._beta_messages\n  anthropic.lib.streaming\n  anthropic.types.messages.message_batch_request_counts\n  anthropic.types.messages.message_batch\n  anthropic.types.messages.batch_list_params\n  anthropic.types.messages.batch_create_params\n  anthropic.types.messages.message_batch_errored_result\n  anthropic.types.messages.message_batch_expired_result\n  anthropic.types.messages.message_batch_canceled_result\n  anthropic.types.messages.message_batch_succeeded_result\n  anthropic.types.messages.message_batch_result\n  anthropic.types.messages.deleted_message_batch\n  anthropic.types.messages.message_batch_individual_response\n  anthropic.types.messages\n  anthropic.resources.messages.batches\n  anthropic.resources.messages.messages\n  anthropic.resources.messages\n  anthropic.resources.beta.messages.messages\n  anthropic.resources.beta.messages\n  anthropic.resources.beta.beta\n  anthropic.resources.beta\n  anthropic.resources.models\n  anthropic.resources.completions\n  anthropic.resources\n  anthropic.lib.vertex._beta_messages\n  anthropic.lib.vertex._beta\n  anthropic.lib.vertex._client\n  anthropic.lib.vertex\n  anthropic.lib.bedrock._beta_messages\n  anthropic.lib.bedrock._beta\n  anthropic.lib.bedrock._stream_decoder\n  anthropic.lib.bedrock._client\n  anthropic.lib.bedrock\n  anthropic\n\nClaude-related paths in sys.path:\n  /Users/stevengonsalvez/d/git/claude-debugger\n\n============================================================\n Network Connections\n============================================================\nNo active connections to Anthropic endpoints detected\n\n============================================================\n File System Analysis\n============================================================\n\nClaude-related files in /tmp:\n  /tmp/claude-test-3576.json\n  /tmp/claude-test-8120.json\n  /tmp/claude-test-4739.json\n  /tmp/claude-test-7136.json\n  /tmp/claude-test-7988.json\n  /tmp/test-claude.js\n  /tmp/test-claude-home\n  /tmp/claude-test-6080.json\n\n============================================================\n Summary\n============================================================\nReview the above information to determine your Claude Code setup.\nKey indicators:\n- CLI: Look for 'claude' binary in PATH, config files in ~/.claude\n- SDK: Look for Python/Node packages, imported modules\n- Both setups may use ANTHROPIC_API_KEY environment variable\n\nFor e2b sandboxes specifically:\n- Check if code is being executed via subprocess calls to 'claude' command\n- Or if Python/Node SDK is being imported and used directly",
+          "is_error": false
+        }
+      ]
+    },
+    "uuid": "328671da-f3d8-4f04-80f5-3443a8d67436",
+    "timestamp": "2025-09-04T15:08:43.629Z",
+    "toolUseResult": {
+      "stdout": "============================================================\n Claude Code Setup Debugger\n Detecting whether SDK or CLI is being used\n============================================================\n\n============================================================\n System Information\n============================================================\nPython version: 3.12.5 (main, Jan 19 2025, 22:14:39) [Clang 14.0.3 (clang-1403.0.22.14.1)]\nPlatform: darwin\nSystem: Darwin MB1412.local 24.2.0 Darwin Kernel Version 24.2.0: Fri Dec  6 19:01:59 PST 2024; root:xnu-11215.61.5~2/RELEASE_ARM64_T6000 arm64\n\n============================================================\n Claude Code CLI Check\n============================================================\n\u2713 Claude CLI found at: /Users/stevengonsalvez/.nvm/versions/node/v22.13.0/bin/claude\n  Version: 1.0.103 (Claude Code)\n\n============================================================\n Claude Code SDK Check\n============================================================\n\u2713 Python package 'anthropic' found\n  Version: 0.55.0\n  Location: /Users/stevengonsalvez/.pyenv/versions/3.12.5/lib/python3.12/site-packages/anthropic/__init__.py\n\nInstalled pip packages with 'claude':\nclaudesync                               0.7.0\n\nGlobal npm packages with 'claude':\n\u251c\u2500\u2500 @anthropic-ai/claude-code@1.0.103\n\n============================================================\n Environment Variables\n============================================================\nClaude/Anthropic related environment variables:\n  CLAUDECODE=1\n  CLAUDE_CODE_ENTRYPOINT=cli\n\n============================================================\n Running Processes\n============================================================\nClaude-related processes:\n  stevengonsalvez  63041  13.1  1.7 445721296 580928 s011  Rs+  Wed08am  96:46.52 claude   ...\n  stevengonsalvez   8967  10.2  0.8 444559040 257712 s019  S+    2:16pm   0:19.54 claude  ...\n  stevengonsalvez  62943   1.6  0.2 412962768  56944 s007  S+   Wed08am  16:52.37 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  18251   1.0  0.1 411400240  23088 s012  S+    4:07pm   0:01.69 target/debug/claude-box...\n  stevengonsalvez  59774   0.3  0.1 412994752  32000 s009  S+   Wed08am  17:47.85 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  57057   0.2  0.1 412930000  29936 s015  S+   Wed08am  13:01.28 /Applications/VibeTunnel.app/Contents/Resources/vibetunnel fwd claude ...\n  stevengonsalvez  26576   0.1  0.2 411704176  53040   ??  S     4:08pm   0:00.38 /Users/stevengonsalvez/.pyenv/versions/3.12.5/bin/python3 claude-debug...\n  stevengonsalvez   6160   0.0  0.0 444038432  15072   ??  S     1:05pm   0:00.93 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Content...\n  stevengonsalvez  96887   0.0  0.0 410745232    736   ??  S<    3:20am   0:00.03 /Applications/Claude.app/Contents/Frameworks/Squirrel.framework/Resour...\n  stevengonsalvez  94772   0.0  0.1 1865507248  18592   ??  S     3:19am   0:01.09 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94641   0.0  0.1 1865314624  22320   ??  S     3:19am   0:01.64 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94381   0.0  0.2 1875802160  58640   ??  S     3:19am   4:57.42 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94357   0.0  0.0 1865302880   6624   ??  S     3:19am   0:00.71 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94355   0.0  0.1 1865319584  21376   ??  S     3:19am   0:00.90 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer)...\n  stevengonsalvez  94278   0.0  0.1 444088688  28752   ??  S     3:19am   0:07.48 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Content...\n  stevengonsalvez  94276   0.0  0.1 444253952  31152   ??  S     3:19am   3:57.26 /Applications/Claude.app/Contents/Frameworks/Claude Helper (GPU).app/C...\n  stevengonsalvez  94270   0.0  0.0 443729280   1168   ??  S     3:19am   0:00.06 /Applications/Claude.app/Contents/Frameworks/Electron Framework.framew...\n  stevengonsalvez  94222   0.0  0.2 1865850416  69600   ??  S     3:19am   0:52.38 /Applications/Claude.app/Contents/MacOS/Claude...\n  stevengonsalvez  95126   0.0  1.7 412354656 574320 s000  S+   10:10pm 138:53.19 /Users/stevengonsalvez/.local/share/uv/tools/claude-monitor/bin/python...\n  stevengonsalvez  62933   0.0  0.0 410733856    336 s007  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  59880   0.0  0.1 444445904  26144 s017  Ss+  Wed08am  51:27.96 claude   ...\n  stevengonsalvez  59763   0.0  0.0 410743072    336 s009  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  57218   0.0  0.1 444291776  21552 s006  Ss+  Wed08am  15:20.56 claude   ...\n  stevengonsalvez  57046   0.0  0.0 410743072    336 s015  S+   Wed08am   0:00.01 /bin/bash /Applications/VibeTunnel.app/Contents/Resources/vt claude --...\n  stevengonsalvez  13951   0.0  0.0 443708800    816   ??  S    Mon03am   0:00.37 /Applications/Claude.app/Contents/Frameworks/Electron Framework.framew...\n  stevengonsalvez  35845   0.0  0.1 444684480  21600 s008  S+   Thu11pm 221:13.94 claude  ...\n  stevengonsalvez  26557   0.0  0.0 410779232   4560   ??  Ss    4:08pm   0:00.02 /bin/zsh -c -l source /Users/stevengonsalvez/.claude/shell-snapshots/s...\n\n============================================================\n Docker/Container Check\n============================================================\n\u2717 Not running in a container (or container type not detected)\n\n============================================================\n Python Runtime Analysis\n============================================================\nCurrently imported Claude/Anthropic modules:\n  anthropic.types.model\n  anthropic._types\n  anthropic._utils._sync\n  anthropic._utils._proxy\n  anthropic._compat\n  anthropic._utils._utils\n  anthropic._utils._typing\n  anthropic._utils._streams\n  anthropic._files\n  anthropic._utils._transform\n  anthropic._utils._reflection\n  anthropic._utils\n  anthropic._constants\n  anthropic._models\n  anthropic.types.server_tool_usage\n  anthropic.types.usage\n  anthropic.types.shared.billing_error\n  anthropic.types.shared.not_found_error\n  anthropic.types.shared.api_error_object\n  anthropic.types.shared.overloaded_error\n  anthropic.types.shared.permission_error\n  anthropic.types.shared.rate_limit_error\n  anthropic.types.shared.authentication_error\n  anthropic.types.shared.gateway_timeout_error\n  anthropic.types.shared.invalid_request_error\n  anthropic.types.shared.error_object\n  anthropic.types.shared.error_response\n  anthropic.types.shared\n  anthropic.types.stop_reason\n  anthropic.types.citation_char_location\n  anthropic.types.citation_page_location\n  anthropic.types.citation_content_block_location\n  anthropic.types.citations_web_search_result_location\n  anthropic.types.text_citation\n  anthropic.types.text_block\n  anthropic.types.thinking_block\n  anthropic.types.tool_use_block\n  anthropic.types.server_tool_use_block\n  anthropic.types.redacted_thinking_block\n  anthropic.types.web_search_result_block\n  anthropic.types.web_search_tool_result_error\n  anthropic.types.web_search_tool_result_block_content\n  anthropic.types.web_search_tool_result_block\n  anthropic.types.content_block\n  anthropic.types.message\n  anthropic.types.beta_api_error\n  anthropic.types.beta_billing_error\n  anthropic.types.beta_not_found_error\n  anthropic.types.beta_overloaded_error\n  anthropic.types.beta_permission_error\n  anthropic.types.beta_rate_limit_error\n  anthropic.types.beta_authentication_error\n  anthropic.types.beta_gateway_timeout_error\n  anthropic.types.beta_invalid_request_error\n  anthropic.types.beta_error\n  anthropic.types.completion\n  anthropic.types.model_info\n  anthropic.types.text_delta\n  anthropic.types.cache_control_ephemeral_param\n  anthropic.types.tool_param\n  anthropic.types.model_param\n  anthropic.types.citation_char_location_param\n  anthropic.types.citation_page_location_param\n  anthropic.types.citation_content_block_location_param\n  anthropic.types.citation_web_search_result_location_param\n  anthropic.types.text_citation_param\n  anthropic.types.text_block_param\n  anthropic.types.url_image_source_param\n  anthropic.types.base64_image_source_param\n  anthropic.types.image_block_param\n  anthropic.types.url_pdf_source_param\n  anthropic.types.citations_config_param\n  anthropic.types.base64_pdf_source_param\n  anthropic.types.plain_text_source_param\n  anthropic.types.content_block_source_content_param\n  anthropic.types.content_block_source_param\n  anthropic.types.document_block_param\n  anthropic.types.thinking_block_param\n  anthropic.types.tool_use_block_param\n  anthropic.types.tool_result_block_param\n  anthropic.types.server_tool_use_block_param\n  anthropic.types.redacted_thinking_block_param\n  anthropic.types.web_search_result_block_param\n  anthropic.types.web_search_tool_request_error_param\n  anthropic.types.web_search_tool_result_block_param_content_param\n  anthropic.types.web_search_tool_result_block_param\n  anthropic.types.message_param\n  anthropic.types.metadata_param\n  anthropic.types.thinking_delta\n  anthropic.types.citations_delta\n  anthropic.types.signature_delta\n  anthropic.types.input_json_delta\n  anthropic.types.tool_bash_20250124_param\n  anthropic.types.web_search_tool_20250305_param\n  anthropic.types.tool_text_editor_20250124_param\n  anthropic.types.tool_union_param\n  anthropic.types.anthropic_beta_param\n  anthropic.types.model_list_params\n  anthropic.types.tool_choice_any_param\n  anthropic.types.tool_choice_auto_param\n  anthropic.types.tool_choice_none_param\n  anthropic.types.tool_choice_tool_param\n  anthropic.types.tool_choice_param\n  anthropic.types.raw_message_stop_event\n  anthropic.types.message_stop_event\n  anthropic.types.beta_error_response\n  anthropic.types.content_block_param\n  anthropic.types.message_delta_usage\n  anthropic.types.raw_message_delta_event\n  anthropic.types.message_delta_event\n  anthropic.types.raw_message_start_event\n  anthropic.types.message_start_event\n  anthropic.types.raw_content_block_stop_event\n  anthropic.types.raw_content_block_delta\n  anthropic.types.raw_content_block_delta_event\n  anthropic.types.raw_content_block_start_event\n  anthropic.types.raw_message_stream_event\n  anthropic.types.message_stream_event\n  anthropic.types.message_tokens_count\n  anthropic.types.thinking_config_enabled_param\n  anthropic.types.thinking_config_disabled_param\n  anthropic.types.thinking_config_param\n  anthropic.types.message_create_params\n  anthropic.types.completion_create_params\n  anthropic.types.content_block_stop_event\n  anthropic.types.content_block_delta_event\n  anthropic.types.content_block_start_event\n  anthropic.types.message_count_tokens_tool_param\n  anthropic.types.message_count_tokens_params\n  anthropic.types\n  anthropic._exceptions\n  anthropic._qs\n  anthropic._version\n  anthropic._streaming\n  anthropic._decoders\n  anthropic._decoders.jsonl\n  anthropic._response\n  anthropic._utils._httpx\n  anthropic._legacy_response\n  anthropic._base_client\n  anthropic._client\n  anthropic._utils._logs\n  anthropic._utils._resources_proxy\n  anthropic.lib\n  anthropic.lib._extras._common\n  anthropic.lib._extras._google_auth\n  anthropic.lib._extras\n  anthropic.lib.vertex._auth\n  anthropic._resource\n  anthropic.pagination\n  anthropic.types.beta.beta_cache_creation\n  anthropic.types.beta.beta_server_tool_usage\n  anthropic.types.beta.beta_usage\n  anthropic.types.beta.beta_container\n  anthropic.types.beta.beta_stop_reason\n  anthropic.types.beta.beta_citation_char_location\n  anthropic.types.beta.beta_citation_page_location\n  anthropic.types.beta.beta_citation_content_block_location\n  anthropic.types.beta.beta_citations_web_search_result_location\n  anthropic.types.beta.beta_text_citation\n  anthropic.types.beta.beta_text_block\n  anthropic.types.beta.beta_thinking_block\n  anthropic.types.beta.beta_tool_use_block\n  anthropic.types.beta.beta_mcp_tool_use_block\n  anthropic.types.beta.beta_mcp_tool_result_block\n  anthropic.types.beta.beta_server_tool_use_block\n  anthropic.types.beta.beta_container_upload_block\n  anthropic.types.beta.beta_redacted_thinking_block\n  anthropic.types.beta.beta_web_search_result_block\n  anthropic.types.beta.beta_web_search_tool_result_error_code\n  anthropic.types.beta.beta_web_search_tool_result_error\n  anthropic.types.beta.beta_web_search_tool_result_block_content\n  anthropic.types.beta.beta_web_search_tool_result_block\n  anthropic.types.beta.beta_code_execution_output_block\n  anthropic.types.beta.beta_code_execution_result_block\n  anthropic.types.beta.beta_code_execution_tool_result_error_code\n  anthropic.types.beta.beta_code_execution_tool_result_error\n  anthropic.types.beta.beta_code_execution_tool_result_block_content\n  anthropic.types.beta.beta_code_execution_tool_result_block\n  anthropic.types.beta.beta_content_block\n  anthropic.types.beta.beta_message\n  anthropic.types.beta.deleted_file\n  anthropic.types.beta.file_metadata\n  anthropic.types.beta.beta_model_info\n  anthropic.types.beta.beta_text_delta\n  anthropic.types.beta.beta_cache_control_ephemeral_param\n  anthropic.types.beta.beta_tool_param\n  anthropic.types.beta.file_list_params\n  anthropic.types.beta.model_list_params\n  anthropic.types.beta.beta_citation_char_location_param\n  anthropic.types.beta.beta_citation_page_location_param\n  anthropic.types.beta.beta_citation_content_block_location_param\n  anthropic.types.beta.beta_citation_web_search_result_location_param\n  anthropic.types.beta.beta_text_citation_param\n  anthropic.types.beta.beta_text_block_param\n  anthropic.types.beta.beta_url_image_source_param\n  anthropic.types.beta.beta_file_image_source_param\n  anthropic.types.beta.beta_base64_image_source_param\n  anthropic.types.beta.beta_image_block_param\n  anthropic.types.beta.beta_thinking_block_param\n  anthropic.types.beta.beta_tool_use_block_param\n  anthropic.types.beta.beta_tool_result_block_param\n  anthropic.types.beta.beta_mcp_tool_use_block_param\n  anthropic.types.beta.beta_server_tool_use_block_param\n  anthropic.types.beta.beta_container_upload_block_param\n  anthropic.types.beta.beta_url_pdf_source_param\n  anthropic.types.beta.beta_citations_config_param\n  anthropic.types.beta.beta_base64_pdf_source_param\n  anthropic.types.beta.beta_plain_text_source_param\n  anthropic.types.beta.beta_content_block_source_content_param\n  anthropic.types.beta.beta_content_block_source_param\n  anthropic.types.beta.beta_file_document_source_param\n  anthropic.types.beta.beta_request_document_block_param\n  anthropic.types.beta.beta_redacted_thinking_block_param\n  anthropic.types.beta.beta_web_search_result_block_param\n  anthropic.types.beta.beta_web_search_tool_request_error_param\n  anthropic.types.beta.beta_web_search_tool_result_block_param_content_param\n  anthropic.types.beta.beta_web_search_tool_result_block_param\n  anthropic.types.beta.beta_request_mcp_tool_result_block_param\n  anthropic.types.beta.beta_code_execution_output_block_param\n  anthropic.types.beta.beta_code_execution_result_block_param\n  anthropic.types.beta.beta_code_execution_tool_result_error_param\n  anthropic.types.beta.beta_code_execution_tool_result_block_param_content_param\n  anthropic.types.beta.beta_code_execution_tool_result_block_param\n  anthropic.types.beta.beta_content_block_param\n  anthropic.types.beta.beta_message_param\n  anthropic.types.beta.file_upload_params\n  anthropic.types.beta.beta_metadata_param\n  anthropic.types.beta.beta_thinking_delta\n  anthropic.types.beta.beta_citations_delta\n  anthropic.types.beta.beta_signature_delta\n  anthropic.types.beta.beta_input_json_delta\n  anthropic.types.beta.beta_tool_bash_20241022_param\n  anthropic.types.beta.beta_tool_bash_20250124_param\n  anthropic.types.beta.beta_web_search_tool_20250305_param\n  anthropic.types.beta.beta_tool_text_editor_20241022_param\n  anthropic.types.beta.beta_tool_text_editor_20250124_param\n  anthropic.types.beta.beta_tool_text_editor_20250429_param\n  anthropic.types.beta.beta_tool_computer_use_20241022_param\n  anthropic.types.beta.beta_tool_computer_use_20250124_param\n  anthropic.types.beta.beta_code_execution_tool_20250522_param\n  anthropic.types.beta.beta_tool_union_param\n  anthropic.types.beta.beta_tool_choice_any_param\n  anthropic.types.beta.beta_tool_choice_auto_param\n  anthropic.types.beta.beta_tool_choice_none_param\n  anthropic.types.beta.beta_tool_choice_tool_param\n  anthropic.types.beta.beta_tool_choice_param\n  anthropic.types.beta.beta_thinking_config_enabled_param\n  anthropic.types.beta.beta_thinking_config_disabled_param\n  anthropic.types.beta.beta_thinking_config_param\n  anthropic.types.beta.beta_request_mcp_server_tool_configuration_param\n  anthropic.types.beta.beta_request_mcp_server_url_definition_param\n  anthropic.types.beta.message_create_params\n  anthropic.types.beta.beta_message_delta_usage\n  anthropic.types.beta.beta_message_tokens_count\n  anthropic.types.beta.beta_base64_pdf_block_param\n  anthropic.types.beta.beta_raw_message_stop_event\n  anthropic.types.beta.message_count_tokens_params\n  anthropic.types.beta.beta_raw_content_block_delta\n  anthropic.types.beta.beta_raw_message_delta_event\n  anthropic.types.beta.beta_raw_message_start_event\n  anthropic.types.beta.beta_raw_content_block_stop_event\n  anthropic.types.beta.beta_raw_content_block_delta_event\n  anthropic.types.beta.beta_raw_content_block_start_event\n  anthropic.types.beta.beta_raw_message_stream_event\n  anthropic.types.beta\n  anthropic.resources.beta.files\n  anthropic.resources.beta.models\n  anthropic.types.beta.messages.batch_list_params\n  anthropic.types.beta.messages.beta_message_batch_request_counts\n  anthropic.types.beta.messages.beta_message_batch\n  anthropic.types.beta.messages.batch_create_params\n  anthropic.types.beta.messages.beta_message_batch_errored_result\n  anthropic.types.beta.messages.beta_message_batch_expired_result\n  anthropic.types.beta.messages.beta_message_batch_canceled_result\n  anthropic.types.beta.messages.beta_message_batch_succeeded_result\n  anthropic.types.beta.messages.beta_message_batch_result\n  anthropic.types.beta.messages.beta_deleted_message_batch\n  anthropic.types.beta.messages.beta_message_batch_individual_response\n  anthropic.types.beta.messages\n  anthropic.resources.beta.messages.batches\n  anthropic.lib.streaming._types\n  anthropic.lib.streaming._messages\n  anthropic.lib.streaming._beta_types\n  anthropic.lib.streaming._beta_messages\n  anthropic.lib.streaming\n  anthropic.types.messages.message_batch_request_counts\n  anthropic.types.messages.message_batch\n  anthropic.types.messages.batch_list_params\n  anthropic.types.messages.batch_create_params\n  anthropic.types.messages.message_batch_errored_result\n  anthropic.types.messages.message_batch_expired_result\n  anthropic.types.messages.message_batch_canceled_result\n  anthropic.types.messages.message_batch_succeeded_result\n  anthropic.types.messages.message_batch_result\n  anthropic.types.messages.deleted_message_batch\n  anthropic.types.messages.message_batch_individual_response\n  anthropic.types.messages\n  anthropic.resources.messages.batches\n  anthropic.resources.messages.messages\n  anthropic.resources.messages\n  anthropic.resources.beta.messages.messages\n  anthropic.resources.beta.messages\n  anthropic.resources.beta.beta\n  anthropic.resources.beta\n  anthropic.resources.models\n  anthropic.resources.completions\n  anthropic.resources\n  anthropic.lib.vertex._beta_messages\n  anthropic.lib.vertex._beta\n  anthropic.lib.vertex._client\n  anthropic.lib.vertex\n  anthropic.lib.bedrock._beta_messages\n  anthropic.lib.bedrock._beta\n  anthropic.lib.bedrock._stream_decoder\n  anthropic.lib.bedrock._client\n  anthropic.lib.bedrock\n  anthropic\n\nClaude-related paths in sys.path:\n  /Users/stevengonsalvez/d/git/claude-debugger\n\n============================================================\n Network Connections\n============================================================\nNo active connections to Anthropic endpoints detected\n\n============================================================\n File System Analysis\n============================================================\n\nClaude-related files in /tmp:\n  /tmp/claude-test-3576.json\n  /tmp/claude-test-8120.json\n  /tmp/claude-test-4739.json\n  /tmp/claude-test-7136.json\n  /tmp/claude-test-7988.json\n  /tmp/test-claude.js\n  /tmp/test-claude-home\n  /tmp/claude-test-6080.json\n\n============================================================\n Summary\n============================================================\nReview the above information to determine your Claude Code setup.\nKey indicators:\n- CLI: Look for 'claude' binary in PATH, config files in ~/.claude\n- SDK: Look for Python/Node packages, imported modules\n- Both setups may use ANTHROPIC_API_KEY environment variable\n\nFor e2b sandboxes specifically:\n- Check if code is being executed via subprocess calls to 'claude' command\n- Or if Python/Node SDK is being imported and used directly",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  },
+  {
+    "parentUuid": "328671da-f3d8-4f04-80f5-3443a8d67436",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:Bash\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:08:43.644Z",
+    "uuid": "7def8f00-1d09-4a4b-8e9c-1c3778ab42d5",
+    "toolUseID": "toolu_01E5AQhDN3RednAvpFME72JT",
+    "level": "info"
+  },
+  {
+    "parentUuid": "7def8f00-1d09-4a4b-8e9c-1c3778ab42d5",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:08:43.808Z",
+    "uuid": "19102564-2cd3-47ef-9cd8-eab5a0325d3c",
+    "toolUseID": "toolu_01E5AQhDN3RednAvpFME72JT",
+    "level": "info"
+  },
+  {
+    "parentUuid": "19102564-2cd3-47ef-9cd8-eab5a0325d3c",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01Mm2PMwrEV69bu7Vqsm6BEH",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "Based on the output, here's what the Claude Code setup is using:\n\n## **You are using Claude Code CLI**\n\nKey evidence:\n1. **CLI Binary Found**: Claude CLI is installed at `/Users/stevengonsalvez/.nvm/versions/node/v22.13.0/bin/claude` \n2. **CLI Version**: Version 1.0.103 (Claude Code)\n3. **NPM Package**: `@anthropic-ai/claude-code@1.0.103` is installed globally\n4. **Environment Variables**: \n   - `CLAUDECODE=1` \n   - `CLAUDE_CODE_ENTRYPOINT=cli` (explicitly indicates CLI mode)\n5. **Multiple Claude Processes**: Several `claude` processes are running, indicating CLI usage\n\n## Additional Context:\n- **Anthropic Python SDK** is also installed (version 0.55.0), but this is being used by the CLI internally, not as the primary interface\n- The Claude desktop app is also running (shown by various Claude Helper processes)\n- Multiple Claude CLI sessions are active (shown by the various `claude` processes)\n\nThe environment variable `CLAUDE_CODE_ENTRYPOINT=cli` is the definitive indicator that this is running through the Claude Code CLI, not the SDK directly."
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 5,
+        "cache_creation_input_tokens": 7024,
+        "cache_read_input_tokens": 40761,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 7024,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 295,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoa6PbiPFtKTfRNucLYu",
+    "type": "assistant",
+    "uuid": "b620a7b3-e899-4fd0-93f0-512000631b6b",
+    "timestamp": "2025-09-04T15:09:29.345Z"
+  },
+  {
+    "parentUuid": "b620a7b3-e899-4fd0-93f0-512000631b6b",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mStop\u001b[22m [uv run ~/.claude/hooks/stop.py --chat] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:09:30.545Z",
+    "uuid": "8eda70fe-ce48-49c8-9bee-24f91c751c95",
+    "toolUseID": "d57506ac-8690-4372-ac63-9bff001cf778",
+    "level": "info"
+  },
+  {
+    "parentUuid": "8eda70fe-ce48-49c8-9bee-24f91c751c95",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": "can you commit and push to remote"
+    },
+    "uuid": "8d94eabd-45fc-479f-8c5e-f719933bad18",
+    "timestamp": "2025-09-04T15:14:32.624Z"
+  },
+  {
+    "parentUuid": "8d94eabd-45fc-479f-8c5e-f719933bad18",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_017Rsd87KuT1ov9tiWG4At8K",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll commit the claude-debugger script and push it to the remote repository."
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 48093,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 48093,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 4,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoaYBQDQGmQbUpYSrLv5",
+    "type": "assistant",
+    "uuid": "d1d6fa03-18ce-465d-942b-e7f7e59761e0",
+    "timestamp": "2025-09-04T15:14:37.546Z"
+  },
+  {
+    "parentUuid": "d1d6fa03-18ce-465d-942b-e7f7e59761e0",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_017Rsd87KuT1ov9tiWG4At8K",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_0163vFmYRaVq58uLukQhg97C",
+          "name": "TodoWrite",
+          "input": {
+            "todos": [
+              {
+                "content": "Commit claude-debugger.py script",
+                "activeForm": "Committing claude-debugger.py script",
+                "status": "in_progress"
+              },
+              {
+                "content": "Push changes to remote repository",
+                "activeForm": "Pushing changes to remote",
+                "status": "pending"
+              }
+            ]
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 48093,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 48093,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 4,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoaYBQDQGmQbUpYSrLv5",
+    "type": "assistant",
+    "uuid": "2cbfc5b4-b24b-4ceb-88af-39ca59435fc2",
+    "timestamp": "2025-09-04T15:14:39.335Z"
+  },
+  {
+    "parentUuid": "2cbfc5b4-b24b-4ceb-88af-39ca59435fc2",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:14:39.624Z",
+    "uuid": "3a38d228-2e6d-4cde-87cf-dc9fc4d78d7d",
+    "toolUseID": "toolu_0163vFmYRaVq58uLukQhg97C",
+    "level": "info"
+  },
+  {
+    "parentUuid": "3a38d228-2e6d-4cde-87cf-dc9fc4d78d7d",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_0163vFmYRaVq58uLukQhg97C",
+          "type": "tool_result",
+          "content": "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable"
+        }
+      ]
+    },
+    "uuid": "c7a20452-5fff-4df7-8c4d-8ce465efa1e3",
+    "timestamp": "2025-09-04T15:14:39.640Z",
+    "toolUseResult": {
+      "oldTodos": [],
+      "newTodos": [
+        {
+          "content": "Commit claude-debugger.py script",
+          "status": "in_progress",
+          "activeForm": "Committing claude-debugger.py script"
+        },
+        {
+          "content": "Push changes to remote repository",
+          "status": "pending",
+          "activeForm": "Pushing changes to remote"
+        }
+      ]
+    }
+  },
+  {
+    "parentUuid": "c7a20452-5fff-4df7-8c4d-8ce465efa1e3",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:TodoWrite\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:14:39.666Z",
+    "uuid": "c501b868-7a75-4ce3-b128-7f26edd63b29",
+    "toolUseID": "toolu_0163vFmYRaVq58uLukQhg97C",
+    "level": "info"
+  },
+  {
+    "parentUuid": "c501b868-7a75-4ce3-b128-7f26edd63b29",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:14:40.052Z",
+    "uuid": "e2c18900-435a-4325-a8b9-8b0c3c61bb3c",
+    "toolUseID": "toolu_0163vFmYRaVq58uLukQhg97C",
+    "level": "info"
+  },
+  {
+    "parentUuid": "e2c18900-435a-4325-a8b9-8b0c3c61bb3c",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01EBFXGtQCLhE9wJyLJTSMEz",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_0195kY7K17PWJCnMz6oWkzxh",
+          "name": "Bash",
+          "input": {
+            "command": "git status",
+            "description": "Check git status"
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 282,
+        "cache_read_input_tokens": 48093,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 282,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 72,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoaYfwhQnkUgSA7u2Ye7",
+    "type": "assistant",
+    "uuid": "013cdb88-f60d-4c2c-a32f-0e5840c5bade",
+    "timestamp": "2025-09-04T15:14:44.947Z"
+  },
+  {
+    "parentUuid": "013cdb88-f60d-4c2c-a32f-0e5840c5bade",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:14:45.224Z",
+    "uuid": "da34cdee-7b3d-4ff4-ab67-7a6af03d9d8b",
+    "toolUseID": "toolu_0195kY7K17PWJCnMz6oWkzxh",
+    "level": "info"
+  },
+  {
+    "parentUuid": "da34cdee-7b3d-4ff4-ab67-7a6af03d9d8b",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_0195kY7K17PWJCnMz6oWkzxh",
+          "type": "tool_result",
+          "content": "On branch main\nYour branch is up to date with 'origin/main'.\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\tclaude-debugger.py\n\tlogs/\n\nnothing added to commit but untracked files present (use \"git add\" to track)",
+          "is_error": false
+        }
+      ]
+    },
+    "uuid": "0d51cffb-6930-471e-9948-48cf9cf21f2e",
+    "timestamp": "2025-09-04T15:14:45.431Z",
+    "toolUseResult": {
+      "stdout": "On branch main\nYour branch is up to date with 'origin/main'.\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\tclaude-debugger.py\n\tlogs/\n\nnothing added to commit but untracked files present (use \"git add\" to track)",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  },
+  {
+    "parentUuid": "0d51cffb-6930-471e-9948-48cf9cf21f2e",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:Bash\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:14:45.434Z",
+    "uuid": "78e44e07-1fa4-499a-b737-afe3490281a4",
+    "toolUseID": "toolu_0195kY7K17PWJCnMz6oWkzxh",
+    "level": "info"
+  },
+  {
+    "parentUuid": "78e44e07-1fa4-499a-b737-afe3490281a4",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:14:45.683Z",
+    "uuid": "2f764294-7273-49d9-a792-d224e761b8c3",
+    "toolUseID": "toolu_0195kY7K17PWJCnMz6oWkzxh",
+    "level": "info"
+  },
+  {
+    "parentUuid": "2f764294-7273-49d9-a792-d224e761b8c3",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_015KUFGFNcY7hC6tuhcXzWfW",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01QZFjYcQ36LqQtZ1UkBRMdi",
+          "name": "Bash",
+          "input": {
+            "command": "git add claude-debugger.py",
+            "description": "Stage claude-debugger.py for commit"
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 3,
+        "cache_creation_input_tokens": 159,
+        "cache_read_input_tokens": 48375,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 159,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 28,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoaZ59TNfRwfFRCr4Qky",
+    "type": "assistant",
+    "uuid": "b83bc4cf-2031-48fd-9a64-fda69a6a86d0",
+    "timestamp": "2025-09-04T15:14:49.966Z"
+  },
+  {
+    "parentUuid": "b83bc4cf-2031-48fd-9a64-fda69a6a86d0",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:14:50.167Z",
+    "uuid": "c7466333-469e-4fa2-a744-5aef99180226",
+    "toolUseID": "toolu_01QZFjYcQ36LqQtZ1UkBRMdi",
+    "level": "info"
+  },
+  {
+    "parentUuid": "c7466333-469e-4fa2-a744-5aef99180226",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01QZFjYcQ36LqQtZ1UkBRMdi",
+          "type": "tool_result",
+          "content": "",
+          "is_error": false
+        }
+      ]
+    },
+    "uuid": "ffa8dd7a-86e0-4eab-bdd3-6c959b1402e6",
+    "timestamp": "2025-09-04T15:14:51.420Z",
+    "toolUseResult": {
+      "stdout": "",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  },
+  {
+    "parentUuid": "ffa8dd7a-86e0-4eab-bdd3-6c959b1402e6",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:Bash\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:14:51.433Z",
+    "uuid": "c40cac03-a39b-4832-85a4-b361307819c3",
+    "toolUseID": "toolu_01QZFjYcQ36LqQtZ1UkBRMdi",
+    "level": "info"
+  },
+  {
+    "parentUuid": "c40cac03-a39b-4832-85a4-b361307819c3",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:14:51.669Z",
+    "uuid": "c6094641-ef61-4e33-b2f6-e8bf35ccac8e",
+    "toolUseID": "toolu_01QZFjYcQ36LqQtZ1UkBRMdi",
+    "level": "info"
+  },
+  {
+    "parentUuid": "c6094641-ef61-4e33-b2f6-e8bf35ccac8e",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01UviYt7CBTBguBfV2VokwtY",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01VwpQKzwhEcfJwUFKuZjDxo",
+          "name": "Bash",
+          "input": {
+            "command": "git commit -m \"$(cat <<'EOF'\nAdd Claude Code setup debugger script\n\nThis script helps identify whether Claude Code SDK or CLI is being used\nby checking for CLI binaries, SDK packages, environment variables, and\nrunning processes.\n\n\ud83e\udd16 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\"",
+            "description": "Create commit with debugger script"
+          }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 4,
+        "cache_creation_input_tokens": 109,
+        "cache_read_input_tokens": 48534,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 109,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 167,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoaZWRjCoD3tYEmW75V8",
+    "type": "assistant",
+    "uuid": "ed11c1d2-f7ec-4107-bf2f-72a429221da0",
+    "timestamp": "2025-09-04T15:15:01.332Z"
+  },
+  {
+    "parentUuid": "ed11c1d2-f7ec-4107-bf2f-72a429221da0",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:01.574Z",
+    "uuid": "fbc27f09-302d-4599-bab6-983ad8e8cb5a",
+    "toolUseID": "toolu_01VwpQKzwhEcfJwUFKuZjDxo",
+    "level": "info"
+  },
+  {
+    "parentUuid": "fbc27f09-302d-4599-bab6-983ad8e8cb5a",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01VwpQKzwhEcfJwUFKuZjDxo",
+          "type": "tool_result",
+          "content": "[main 947f347] Add Claude Code setup debugger script\n 1 file changed, 277 insertions(+)\n create mode 100755 claude-debugger.py",
+          "is_error": false
+        }
+      ]
+    },
+    "uuid": "e9446c4e-0acd-4583-8f4b-8f898bc0d3f5",
+    "timestamp": "2025-09-04T15:15:02.762Z",
+    "toolUseResult": {
+      "stdout": "[main 947f347] Add Claude Code setup debugger script\n 1 file changed, 277 insertions(+)\n create mode 100755 claude-debugger.py",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  },
+  {
+    "parentUuid": "e9446c4e-0acd-4583-8f4b-8f898bc0d3f5",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:Bash\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:02.779Z",
+    "uuid": "2c24d6b9-7992-4ce2-a120-3c29df14d940",
+    "toolUseID": "toolu_01VwpQKzwhEcfJwUFKuZjDxo",
+    "level": "info"
+  },
+  {
+    "parentUuid": "2c24d6b9-7992-4ce2-a120-3c29df14d940",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:03.074Z",
+    "uuid": "320cffc7-8885-4140-9010-e72b64ab0661",
+    "toolUseID": "toolu_01VwpQKzwhEcfJwUFKuZjDxo",
+    "level": "info"
+  },
+  {
+    "parentUuid": "320cffc7-8885-4140-9010-e72b64ab0661",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_016zsiwyxB78XmjLzTSgFUut",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01UWTCPCb7pPG7dzUrT2Ym9J",
+          "name": "TodoWrite",
+          "input": {
+            "todos": [
+              {
+                "content": "Commit claude-debugger.py script",
+                "activeForm": "Committing claude-debugger.py script",
+                "status": "completed"
+              },
+              {
+                "content": "Push changes to remote repository",
+                "activeForm": "Pushing changes to remote",
+                "status": "in_progress"
+              }
+            ]
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 3,
+        "cache_creation_input_tokens": 222,
+        "cache_read_input_tokens": 48643,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 222,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 22,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoaaMTWTiAVws5woYwAC",
+    "type": "assistant",
+    "uuid": "39826f07-d0cc-46eb-9acb-17c0dce746c9",
+    "timestamp": "2025-09-04T15:15:07.215Z"
+  },
+  {
+    "parentUuid": "39826f07-d0cc-46eb-9acb-17c0dce746c9",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:07.438Z",
+    "uuid": "8cc64860-8498-4f6f-a7a7-62e5be38f9b2",
+    "toolUseID": "toolu_01UWTCPCb7pPG7dzUrT2Ym9J",
+    "level": "info"
+  },
+  {
+    "parentUuid": "8cc64860-8498-4f6f-a7a7-62e5be38f9b2",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01UWTCPCb7pPG7dzUrT2Ym9J",
+          "type": "tool_result",
+          "content": "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable"
+        }
+      ]
+    },
+    "uuid": "ab0527bb-441e-41e0-9852-a40ef7008f63",
+    "timestamp": "2025-09-04T15:15:07.448Z",
+    "toolUseResult": {
+      "oldTodos": [],
+      "newTodos": [
+        {
+          "content": "Commit claude-debugger.py script",
+          "status": "completed",
+          "activeForm": "Committing claude-debugger.py script"
+        },
+        {
+          "content": "Push changes to remote repository",
+          "status": "in_progress",
+          "activeForm": "Pushing changes to remote"
+        }
+      ]
+    }
+  },
+  {
+    "parentUuid": "ab0527bb-441e-41e0-9852-a40ef7008f63",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:TodoWrite\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:07.465Z",
+    "uuid": "bed2f806-4996-4b5c-89d5-52a432c81bd8",
+    "toolUseID": "toolu_01UWTCPCb7pPG7dzUrT2Ym9J",
+    "level": "info"
+  },
+  {
+    "parentUuid": "bed2f806-4996-4b5c-89d5-52a432c81bd8",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:07.689Z",
+    "uuid": "919038e0-2acc-4c6b-9761-ac2e77e4f1ee",
+    "toolUseID": "toolu_01UWTCPCb7pPG7dzUrT2Ym9J",
+    "level": "info"
+  },
+  {
+    "parentUuid": "919038e0-2acc-4c6b-9761-ac2e77e4f1ee",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_01GSh9nV72xDt7PJcpURw8kt",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01Mt6ED6BLTaWrirK48EooH4",
+          "name": "Bash",
+          "input": {
+            "command": "git push origin main",
+            "description": "Push commits to remote repository"
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 267,
+        "cache_read_input_tokens": 48865,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 267,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 76,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoaahWkxbnyjf1m331FR",
+    "type": "assistant",
+    "uuid": "13c403b2-ebd4-44c5-b0d5-08b7dd1755c0",
+    "timestamp": "2025-09-04T15:15:11.542Z"
+  },
+  {
+    "parentUuid": "13c403b2-ebd4-44c5-b0d5-08b7dd1755c0",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:11.867Z",
+    "uuid": "37100104-21ab-4e6c-8323-aeb79439fad6",
+    "toolUseID": "toolu_01Mt6ED6BLTaWrirK48EooH4",
+    "level": "info"
+  },
+  {
+    "parentUuid": "37100104-21ab-4e6c-8323-aeb79439fad6",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01Mt6ED6BLTaWrirK48EooH4",
+          "type": "tool_result",
+          "content": "To https://github.com/stevengonsalvez/claude-debugger.git\n   56533cc..947f347  main -> main",
+          "is_error": false
+        }
+      ]
+    },
+    "uuid": "5ff2bb78-992c-4881-8239-afd1af0877de",
+    "timestamp": "2025-09-04T15:15:13.817Z",
+    "toolUseResult": {
+      "stdout": "To https://github.com/stevengonsalvez/claude-debugger.git\n   56533cc..947f347  main -> main",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
+  },
+  {
+    "parentUuid": "5ff2bb78-992c-4881-8239-afd1af0877de",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:Bash\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:13.829Z",
+    "uuid": "20d8db2a-d99b-4f50-a216-7c1503e91e31",
+    "toolUseID": "toolu_01Mt6ED6BLTaWrirK48EooH4",
+    "level": "info"
+  },
+  {
+    "parentUuid": "20d8db2a-d99b-4f50-a216-7c1503e91e31",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:Bash\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:14.044Z",
+    "uuid": "b3dcca72-dacc-4995-a3b2-1a38be367f83",
+    "toolUseID": "toolu_01Mt6ED6BLTaWrirK48EooH4",
+    "level": "info"
+  },
+  {
+    "parentUuid": "b3dcca72-dacc-4995-a3b2-1a38be367f83",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_018JYPn8ieAx2GRjHSuxxkxh",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_01V3AWNHHqvaMvn9KA6KFYVF",
+          "name": "TodoWrite",
+          "input": {
+            "todos": [
+              {
+                "content": "Commit claude-debugger.py script",
+                "activeForm": "Committing claude-debugger.py script",
+                "status": "completed"
+              },
+              {
+                "content": "Push changes to remote repository",
+                "activeForm": "Pushing changes to remote",
+                "status": "completed"
+              }
+            ]
+          }
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 2,
+        "cache_creation_input_tokens": 121,
+        "cache_read_input_tokens": 49132,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 121,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 21,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoabAGawnic2bB6FbSCm",
+    "type": "assistant",
+    "uuid": "fb9bd5f3-4b1f-46b4-9877-8657dd0b3711",
+    "timestamp": "2025-09-04T15:15:18.242Z"
+  },
+  {
+    "parentUuid": "fb9bd5f3-4b1f-46b4-9877-8657dd0b3711",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPreToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/pre_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:18.454Z",
+    "uuid": "89990054-7a21-481d-b955-3bcd4cd12d31",
+    "toolUseID": "toolu_01V3AWNHHqvaMvn9KA6KFYVF",
+    "level": "info"
+  },
+  {
+    "parentUuid": "89990054-7a21-481d-b955-3bcd4cd12d31",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "user",
+    "message": {
+      "role": "user",
+      "content": [
+        {
+          "tool_use_id": "toolu_01V3AWNHHqvaMvn9KA6KFYVF",
+          "type": "tool_result",
+          "content": "Todos have been modified successfully. Ensure that you continue to use the todo list to track your progress. Please proceed with the current tasks if applicable"
+        }
+      ]
+    },
+    "uuid": "77e9a546-0a7e-48c3-8700-e8aaaec9fbe9",
+    "timestamp": "2025-09-04T15:15:18.468Z",
+    "toolUseResult": {
+      "oldTodos": [],
+      "newTodos": [
+        {
+          "content": "Commit claude-debugger.py script",
+          "status": "completed",
+          "activeForm": "Committing claude-debugger.py script"
+        },
+        {
+          "content": "Push changes to remote repository",
+          "status": "completed",
+          "activeForm": "Pushing changes to remote"
+        }
+      ]
+    }
+  },
+  {
+    "parentUuid": "77e9a546-0a7e-48c3-8700-e8aaaec9fbe9",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "Running \u001b[1mPostToolUse:TodoWrite\u001b[22m...",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:18.483Z",
+    "uuid": "aa67a6d0-a777-4d52-ae9f-07b1be040adb",
+    "toolUseID": "toolu_01V3AWNHHqvaMvn9KA6KFYVF",
+    "level": "info"
+  },
+  {
+    "parentUuid": "aa67a6d0-a777-4d52-ae9f-07b1be040adb",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "type": "system",
+    "content": "\u001b[1mPostToolUse:TodoWrite\u001b[22m [uv run ~/.claude/hooks/post_tool_use.py] completed successfully",
+    "isMeta": false,
+    "timestamp": "2025-09-04T15:15:18.668Z",
+    "uuid": "5f9abe15-345b-4f9b-8eea-e7af54d9e04a",
+    "toolUseID": "toolu_01V3AWNHHqvaMvn9KA6KFYVF",
+    "level": "info"
+  },
+  {
+    "parentUuid": "5f9abe15-345b-4f9b-8eea-e7af54d9e04a",
+    "isSidechain": false,
+    "userType": "external",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "sessionId": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "version": "1.0.103",
+    "gitBranch": "main",
+    "message": {
+      "id": "msg_017aAAxhPB3H4jW6muMGHPNq",
+      "type": "message",
+      "role": "assistant",
+      "model": "claude-opus-4-1-20250805",
+      "content": [
+        {
+          "type": "text",
+          "text": "Done! Successfully committed and pushed the claude-debugger.py script to the remote repository at https://github.com/stevengonsalvez/claude-debugger.git"
+        }
+      ],
+      "stop_reason": null,
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 1,
+        "cache_creation_input_tokens": 240,
+        "cache_read_input_tokens": 49253,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 240,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1,
+        "service_tier": "standard"
+      }
+    },
+    "requestId": "req_011CSoabWJM9k9uCMToFpSbT",
+    "type": "assistant",
+    "uuid": "c3cb1ab2-6154-4fac-aeb2-e5a7f7618c04",
+    "timestamp": "2025-09-04T15:15:21.896Z"
+  }
+]
