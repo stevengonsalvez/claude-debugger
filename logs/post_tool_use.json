@@ -708,5 +708,23 @@
         }
       ]
     }
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "PostToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "git add -A && git commit -m \"$(cat <<'EOF'\nEnhance debugger to show Claude CLI launch details\n\n- Added detection of Claude CLI launch commands and arguments\n- Shows PID, start time, CPU time for each session\n- Detects and parses command-line flags like -p, -m, --debug\n- Shows working directory for each Claude session\n- Improved filtering to exclude helper processes\n\n\ud83e\udd16 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\" && git push origin main",
+      "description": "Commit and push enhanced debugger"
+    },
+    "tool_response": {
+      "stdout": "[main b3c8a10] Enhance debugger to show Claude CLI launch details\n 8 files changed, 3066 insertions(+)\n create mode 100644 logs/chat.json\n create mode 100644 logs/notification.json\n create mode 100644 logs/post_tool_use.json\n create mode 100644 logs/pre_tool_use.json\n create mode 100644 logs/session_start.json\n create mode 100644 logs/stop.json\n create mode 100644 logs/user_prompt_submit.json\nTo https://github.com/stevengonsalvez/claude-debugger.git\n   947f347..b3c8a10  main -> main",
+      "stderr": "",
+      "interrupted": false,
+      "isImage": false
+    }
   }
 ]

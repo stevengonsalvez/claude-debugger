@@ -22,5 +22,13 @@
     "permission_mode": "bypassPermissions",
     "hook_event_name": "Stop",
     "stop_hook_active": false
+  },
+  {
+    "session_id": "8ac88f55-4278-4085-9d2b-e51a7aac2ee4",
+    "transcript_path": "/Users/stevengonsalvez/.claude/projects/-Users-stevengonsalvez-d-git-claude-debugger/8ac88f55-4278-4085-9d2b-e51a7aac2ee4.jsonl",
+    "cwd": "/Users/stevengonsalvez/d/git/claude-debugger",
+    "permission_mode": "bypassPermissions",
+    "hook_event_name": "Stop",
+    "stop_hook_active": false
   }
 ]
